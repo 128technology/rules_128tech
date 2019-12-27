@@ -1,0 +1,19 @@
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "docs",
+    srcs = [
+        "//exec_wrapper:rules.md",
+        "//private:cfg.md",
+        "//python:env.md",
+        "//python:pip.md",
+        "//python:versions.md",
+        "//python/coverage:rules.md",
+        "//python/entry_point:rules.md",
+        "//util:genrules.md",
+        "//util:run_in_workspace.md",
+        "//util:template.md",
+    ],
+    strip_prefix = ".",
+    tags = ["docs"],
+)

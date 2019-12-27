@@ -1,0 +1,26 @@
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["run_args.sh"])
+
+stardoc(
+    name = "genrules-doc",
+    out = "genrules.md",
+    input = "genrules.bzl",
+    tags = ["docs"],
+)
+
+stardoc(
+    name = "run_in_workspace-doc",
+    out = "run_in_workspace.md",
+    input = "run_in_workspace.bzl",
+    tags = ["docs"],
+)
+
+stardoc(
+    name = "template-doc",
+    out = "template.md",
+    input = "template.bzl",
+    tags = ["docs"],
+)

@@ -1,0 +1,11 @@
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+
+exports_files(["template.py"])
+
+stardoc(
+    name = "rules-doc",
+    out = "rules.md",
+    input = "rules.bzl",
+    tags = ["docs"],
+    visibility = ["//docs:__pkg__"],
+)

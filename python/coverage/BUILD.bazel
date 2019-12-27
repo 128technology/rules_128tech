@@ -1,0 +1,17 @@
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+load(":rules.bzl", "coverage_collector")
+
+exports_files(["collector.py"])
+
+coverage_collector(name = "collector")
+
+stardoc(
+    name = "rules-doc",
+    out = "rules.md",
+    input = "rules.bzl",
+    tags = ["docs"],
+    visibility = ["//docs:__pkg__"],
+    deps = [
+        "@rules_python//docs:defs",
+    ],
+)

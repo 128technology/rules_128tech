@@ -1,0 +1,54 @@
+import argparse
+import pathlib
+import sys
+
+import pytest
+
+
+def main():
+    parsed_args = _parse_args()
+
+    args = [@ARGS@] + ["--color=yes", "-vvv"]
+    srcs = [@SRCS@]
+
+    extracted_directory = pathlib.Path(sys.path[0])
+    resolved_sources = [str(extracted_directory / src) for src in srcs]
+
+    if parsed_args.junitxml is not None:
+        args.append(f"--junitxml={parsed_args.junitxml}")
+
+    sys.argv = ["REAL_PYTEST_HERE__NOTHING_TO_SEE"]
+
+    exit_code = pytest.main(args + resolved_sources)
+
+    # Suppress exit code 5, which means no tests were collected, in case all
+    # tests need to be skipped due to the platform or other support limitations
+    # https://docs.pytest.org/en/latest/usage.html#possible-exit-codes
+    if exit_code != 5:
+        sys.exit(exit_code)
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run pytest as standalone test supporting the google test runner."
+    )
+
+    parser.add_argument(
+        "--gtest_output", dest="junitxml", type=str, help="The gtest junit argument"
+    )
+
+    args = parser.parse_known_args()[0]
+    args.junitxml = _transform_junitxml(args.junitxml)
+
+    return args
+
+
+def _transform_junitxml(junit):
+    prefix = "xml:"
+    return (
+        junit[len(prefix) :] if junit is not None and junit.startswith(prefix) else None
+    )
+
+
+if __name__ == "__main__":
+    main()

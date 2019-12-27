@@ -1,0 +1,27 @@
+load("@rules_python//python:defs.bzl", "py_library")
+load("//python/par:rules.bzl", "parkour")
+
+py_library(
+    name = "magic_number",
+    srcs = ["magic_number.py"],
+    imports = ["."],
+    srcs_version = "PY3",
+)
+
+parkour(
+    name = "python-with-magic-number",
+    deps = [":magic_number"],
+)
+
+sh_test(
+    name = "parkour_test",
+    srcs = ["parkour_test.sh"],
+    args = [
+        "$(location :python-with-magic-number.par)",
+        "$(location test_magic_number.py)",
+    ],
+    data = [
+        "test_magic_number.py",
+        ":python-with-magic-number.par",
+    ],
+)

@@ -1,0 +1,6 @@
+# flags required to generate documentation
+build:docs --java_toolchain=@bazel_tools//tools/jdk:toolchain_hostjdk8
+build:docs --build_tag_filters="docs"
+
+# don't build documentation by default
+build --build_tag_filters="-docs"

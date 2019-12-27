@@ -1,0 +1,29 @@
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+config_setting(
+    name = "optimize",
+    values = {"compilation_mode": "opt"},
+    visibility = ["//:__subpackages__"],
+)
+
+config_setting(
+    name = "disable_color",
+    define_values = {
+        "color": "no",
+    },
+)
+
+bzl_library(
+    name = "cfg",
+    srcs = [":cfg.bzl"],
+    visibility = ["//visibility:public"],
+)
+
+stardoc(
+    name = "cfg-doc",
+    out = "cfg.md",
+    input = "cfg.bzl",
+    tags = ["docs"],
+    visibility = ["//docs:__pkg__"],
+)
