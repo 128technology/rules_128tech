@@ -7,8 +7,8 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 def pkg_python_app(
         name,
+        tar,
         entrypoint = None,
-        tar = None,
         bindir = None,
         libdir = None,
         env = None,
@@ -22,9 +22,10 @@ def pkg_python_app(
     Args:
         name: (str) The name of the python binary application.
 
-        entrypoint: (str) The name of the entry point to execute the python application.
-
         tar: (str) The name of the tar containing all built artifacts.
+
+        entrypoint: (str) The name of the entry point to execute the python application.
+            Defaults to the `name` of the application
 
         bindir: (str) The directory where the binary entry point will be placed.
 
