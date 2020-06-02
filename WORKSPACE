@@ -22,9 +22,9 @@ go_register_toolchains()
 
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "64104b8d7b623e804f981b52378267148cca42af4b77fe70ddfc27857dc5bae0",
-    strip_prefix = "protobuf-master",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/master.zip"],
+    sha256 = "b0a1da830747a2ffc1125fc84dbd3fe32a876396592d4580501749a2d0d0cb15",
+    strip_prefix = "protobuf-3.12.2",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.12.2.zip"],
 )
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
@@ -33,9 +33,9 @@ protobuf_deps()
 
 http_archive(
     name = "com_github_bazelbuild_buildtools",
-    sha256 = "deadb35ae3877aa118ba20531afb2e2e4e8aaac5d3df5d5b51cbb3f0f2e0581e",
-    strip_prefix = "buildtools-master",
-    url = "https://github.com/bazelbuild/buildtools/archive/master.zip",
+    sha256 = "55095ba38ab866166052d7e99a5ff237797cf86de4481f07d7f43540e79641df",
+    strip_prefix = "buildtools-3.2.0",
+    url = "https://github.com/bazelbuild/buildtools/archive/3.2.0.zip",
 )
 
 load("@com_github_bazelbuild_buildtools//buildifier:deps.bzl", "buildifier_dependencies")
