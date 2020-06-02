@@ -15,16 +15,21 @@ def add_python_lint_tests(pylint = True, rcfile = None):
     Add all the available static analysis available for each python target in the current BUILD file.
 
     Pylint:
-        Creates one or two targets in the current package named ":pylint_test", ":pylint"
+        Create a single target named ":pylint" which will lint all *py_binary*'s in the
+        current directory.
+
         Targets with the tag "no-pylint" will not have pylint run on them.
 
+        For each *py_binary* a "manual" target with the name
+        "<original_py_binary_name>_pylint" will be created so that linting can be run
+        on just that file.
+
     Args:
-        pylint(bool): control whether pylint tests are created for each target
+        pylint(bool): control whether pylint tests are created.
         rcfile(label): pylint configuration file
 
     """
 
-    # split pylint into two groups as we have two different rc files.
     pylint_srcs = []
     pylint_deps = []
 
@@ -32,17 +37,17 @@ def add_python_lint_tests(pylint = True, rcfile = None):
         if not should_add_lint_test(existing_rule):
             continue
 
+        name = existing_rule["name"]
         srcs = existing_rule["srcs"]
-        deps = existing_rule["deps"]
 
         if "no-pylint" not in existing_rule["tags"]:
             pylint_srcs.extend(srcs)
-            pylint_deps.extend(deps)
+            pylint_deps.append(name)
 
             pylint_test(
-                name = "%s_pylint" % existing_rule["name"],
-                srcs = list(srcs),
-                deps = deps,
+                name = "%s_pylint" % name,
+                srcs = srcs,
+                deps = depset(transitive = [depset([name])]),
                 rcfile = rcfile,
                 tags = ["manual"],
             )
@@ -54,9 +59,7 @@ def add_python_lint_tests(pylint = True, rcfile = None):
         pylint_test(
             name = "pylint",
             srcs = depset(pylint_srcs).to_list(),
-            deps = depset(
-                transitive = [depset(pylint_deps)],
-            ),
+            deps = depset(transitive = [depset(pylint_deps)]),
             rcfile = rcfile,
         )
 

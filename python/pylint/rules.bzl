@@ -46,8 +46,10 @@ def pylint_test(
     )
 
     args = list(args) + ["--score", "no"]
+    pylint_data = list()
 
     if rcfile != None:
+        pylint_data.append(rcfile)
         args.extend(["--rcfile", "$(location %s)" % rcfile])
 
     for src in srcs:
@@ -55,11 +57,16 @@ def pylint_test(
 
     py_test(
         name = name,
-        srcs = [entry_point_output] + srcs,
-        data = [rcfile] + data,
+        srcs = [entry_point_output] + list(srcs),
+        data = pylint_data + data,
         main = entry_point_output,
         deps = depset(
-            direct = ["@pip3//pylint"],
+            direct = [
+                "@pip3//pylint",
+                # we need an explicit dep on toml because rules_pip doesn't support
+                # adding a dep on `isort[pyproject]`.
+                "@pip3//toml",
+            ],
             transitive = [depset(deps)],
         ),
         python_version = "PY3",
