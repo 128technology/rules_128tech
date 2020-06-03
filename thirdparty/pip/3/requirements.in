@@ -4,7 +4,6 @@ pdbpp
 pylint
 pytest
 pytest-cov
-pytest-isort
 pytest-randomly
 pytest-timeout
 toml

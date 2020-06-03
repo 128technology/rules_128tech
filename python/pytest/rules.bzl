@@ -59,16 +59,12 @@ def pytest_test(
 
         if version == "PY3":
             version_args.extend([
-                "--isort",
                 "--cov",
                 "--no-cov-on-fail",
             ])
 
-            # isort implicitly requires toml to use `pyproject.toml:[tool.isort]`
             pytest_deps.extend([
-                "@pip3//pytest_isort",
                 "@pip3//pytest_timeout",
-                "@pip3//toml",
                 "@pip3//pytest_cov",
                 "@pip3//pdbpp",
             ])
