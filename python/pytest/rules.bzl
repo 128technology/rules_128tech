@@ -20,6 +20,7 @@ def pytest_test(
         deps = [],
         python_version = "PY3",
         data = [],
+        args = [],
         tags = [],
         shuffle = True,
         **kwargs):
@@ -32,14 +33,12 @@ def pytest_test(
         deps(label_list): dependencies of the test
         python_version(str): the major version of python under which to run the tests (as in py_test)
         data(label_list): data files to include
+        args(str_list): arguments to pass to pytest.
         tags(str_list): list of arbitrary text tag
-        shuffle(bool): if true, use pytest-randomly to shuffle tests in an arbitrary order.
+        shuffle(bool): if true, use pytest-randomly to shuffle tests in an arbitrary order
         **kwargs: anything else to pass to the underlying py_test rule
     """
-    if kwargs.pop("src", None):
-        fail("'src' is no longer used in the 'pytest_test' rule. Use 'srcs' as a list instead")
-
-    args = []
+    args = list(args)
 
     args.extend(["$(location %s)" % src_ for src_ in srcs])
 
