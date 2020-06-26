@@ -12,7 +12,7 @@ def pkg_python_app(
         bindir = None,
         libdir = None,
         env = None,
-        exec_wrapper_kwargs = {},
+        use_exec_wrapper = True,
         zip_safe = False,
         mode = "0755",
         tar_visibility = None,
@@ -35,11 +35,11 @@ def pkg_python_app(
             - <libdir>/par/: The par_binary archive will be placed here.
             - <libdir>/unpar/: The par_binary archive will unpack here on first invocating.
 
-        env (str_dict): Deprecated. Use exec_wrapper_kwargs instead
+        env: (str_dict) Specify custom environment variables that should be set.
+            [default get_python_env()]
 
-        exec_wrapper_kwargs: (str_dict) Specify custom args to override in the call
-            to exec_wrapper. This will be merged with the default values.
-            [default: {}]
+        use_exec_wrapper: (bool) Whether or not to create an exec_wrapper to run the app
+            [default: True]
 
         zip_safe: (bool) Whether the binary is zip safe. See par_binary for more info.
 
@@ -62,14 +62,12 @@ def pkg_python_app(
     """
     entrypoint = entrypoint or name
 
-    if env != None:
-        fail("'env' arg is deprecated, use 'exec_wrapper_kwargs' with key 'env' instead")
-
-    exec_wrapper_kwargs = dict(exec_wrapper_kwargs)
-    exec_wrapper_kwargs.setdefault("name", "%s_exec_wrapper" % name)
-    exec_wrapper_kwargs.setdefault("exe", "%s/par/%s.par" % (libdir, name))
-    exec_wrapper_kwargs.setdefault("env", get_python_env())
-    exec_wrapper(**exec_wrapper_kwargs)
+    if use_exec_wrapper:
+        exec_wrapper(
+            name = "%s_exec_wrapper" % name,
+            env = env or get_python_env(),
+            exe = "%s/par/%s.par" % (libdir, name),
+        )
 
     if zip_safe:
         extract_dir = None
@@ -83,17 +81,18 @@ def pkg_python_app(
         **kwargs
     )
 
+    srcs = [":%s.par" % name]
+    remap_paths = {"/%s.par" % name: "%s/par/%s.par" % (libdir, name)}
+
+    if use_exec_wrapper:
+        srcs.append(":%s_exec_wrapper" % name)
+        remap_paths["/%s_exec_wrapper" % name] = "%s/%s" % (bindir, entrypoint)
+
     pkg_tar(
         name = tar,
-        srcs = [
-            ":%s_exec_wrapper" % name,
-            ":%s.par" % name,
-        ],
+        srcs = srcs,
         mode = mode,
         strip_prefix = ".",
-        remap_paths = {
-            "/%s_exec_wrapper" % name: "%s/%s" % (bindir, entrypoint),
-            "/%s.par" % name: "%s/par/%s.par" % (libdir, name),
-        },
+        remap_paths = remap_paths,
         visibility = tar_visibility,
     )
