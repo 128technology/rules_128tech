@@ -12,6 +12,7 @@ def pkg_python_app(
         bindir = None,
         libdir = None,
         env = None,
+        exec_wrapper_kwargs = {},
         zip_safe = False,
         mode = "0755",
         tar_visibility = None,
@@ -34,8 +35,11 @@ def pkg_python_app(
             - <libdir>/par/: The par_binary archive will be placed here.
             - <libdir>/unpar/: The par_binary archive will unpack here on first invocating.
 
-        env: (str_dict) Specify custom environment variables that should be set.
-            [default get_python_env()]
+        env (str_dict): Deprecated. Use exec_wrapper_kwargs instead
+
+        exec_wrapper_kwargs: (str_dict) Specify custom args to override in the call
+            to exec_wrapper. This will be merged with the default values.
+            [default: {}]
 
         zip_safe: (bool) Whether the binary is zip safe. See par_binary for more info.
 
@@ -58,11 +62,14 @@ def pkg_python_app(
     """
     entrypoint = entrypoint or name
 
-    exec_wrapper(
-        name = "%s_exec_wrapper" % name,
-        env = env or get_python_env(),
-        exe = "%s/par/%s.par" % (libdir, name),
-    )
+    if env != None:
+        fail("'env' arg is deprecated, use 'exec_wrapper_kwargs' with key 'env' instead")
+
+    exec_wrapper_kwargs = dict(exec_wrapper_kwargs)
+    exec_wrapper_kwargs.setdefault("name", "%s_exec_wrapper" % name)
+    exec_wrapper_kwargs.setdefault("exe", "%s/par/%s.par" % (libdir, name))
+    exec_wrapper_kwargs.setdefault("env", get_python_env())
+    exec_wrapper(**exec_wrapper_kwargs)
 
     if zip_safe:
         extract_dir = None
