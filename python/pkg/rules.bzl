@@ -12,6 +12,7 @@ def pkg_python_app(
         bindir = None,
         libdir = None,
         env = None,
+        use_exec_wrapper = True,
         zip_safe = False,
         mode = "0755",
         tar_visibility = None,
@@ -37,6 +38,9 @@ def pkg_python_app(
         env: (str_dict) Specify custom environment variables that should be set.
             [default get_python_env()]
 
+        use_exec_wrapper: (bool) Whether or not to create an exec_wrapper to run the app
+            [default: True]
+
         zip_safe: (bool) Whether the binary is zip safe. See par_binary for more info.
 
         mode: (str) The mode of the files in the tar.
@@ -58,11 +62,12 @@ def pkg_python_app(
     """
     entrypoint = entrypoint or name
 
-    exec_wrapper(
-        name = "%s_exec_wrapper" % name,
-        env = env or get_python_env(),
-        exe = "%s/par/%s.par" % (libdir, name),
-    )
+    if use_exec_wrapper:
+        exec_wrapper(
+            name = "%s_exec_wrapper" % name,
+            env = env or get_python_env(),
+            exe = "%s/par/%s.par" % (libdir, name),
+        )
 
     if zip_safe:
         extract_dir = None
@@ -76,17 +81,18 @@ def pkg_python_app(
         **kwargs
     )
 
+    srcs = [":%s.par" % name]
+    remap_paths = {"/%s.par" % name: "%s/par/%s.par" % (libdir, name)}
+
+    if use_exec_wrapper:
+        srcs.append(":%s_exec_wrapper" % name)
+        remap_paths["/%s_exec_wrapper" % name] = "%s/%s" % (bindir, entrypoint)
+
     pkg_tar(
         name = tar,
-        srcs = [
-            ":%s_exec_wrapper" % name,
-            ":%s.par" % name,
-        ],
+        srcs = srcs,
         mode = mode,
         strip_prefix = ".",
-        remap_paths = {
-            "/%s_exec_wrapper" % name: "%s/%s" % (bindir, entrypoint),
-            "/%s.par" % name: "%s/par/%s.par" % (libdir, name),
-        },
+        remap_paths = remap_paths,
         visibility = tar_visibility,
     )
