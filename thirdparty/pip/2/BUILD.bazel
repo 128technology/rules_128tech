@@ -1,4 +1,4 @@
-load("@com_apt_itude_rules_pip//rules:compile.bzl", "compile_pip_requirements")
+load("@com_128technology_rules_pip//rules:compile.bzl", "compile_pip_requirements")
 load("//python:versions.bzl", "PYTHON2")
 
 compile_pip_requirements(
@@ -6,8 +6,8 @@ compile_pip_requirements(
     python_interpreter = PYTHON2,
     requirements_in = ":requirements.in",
     requirements_txt = select({
-        "@com_apt_itude_rules_pip//:linux": "requirements-linux.txt",
-        "@com_apt_itude_rules_pip//:osx": "requirements-osx.txt",
+        "@com_128technology_rules_pip//:linux": "requirements-linux.txt",
+        "@com_128technology_rules_pip//:osx": "requirements-osx.txt",
     }),
 )
 

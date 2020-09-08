@@ -165,7 +165,7 @@ Bazel unfortunately swallows output from the tools that it executes when fetchin
 In order to debug the tool that is used for fetching the pip dependencies, execute the following commands:
 
 ```
-python<major>.<minor> $(bazel info output_base)/external/com_apt_itude_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/<major>/requirements-<platform>.txt
+python<major>.<minor> $(bazel info output_base)/external/com_128technology_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/<major>/requirements-<platform>.txt
 ```
 
 Where:
