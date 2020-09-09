@@ -78,14 +78,14 @@ letters lowercased and all hyphens replaced with underscores
 
 `pip/3/requirements.in`:
 
-```
+```txt
 python-dateutil
 PyYAML
 ```
 
 `BUILD.bazel`:
 
-```
+```py
 py_library(
     name = "mylib",
     srcs = "mylib.py",
@@ -104,7 +104,7 @@ Bazel provides little to no information while resolving/retrieving external depe
 
 For example, Bazel commonly prints error messages like the following:
 
-```
+```txt
 ERROR: Analysis of target '//packaging/apps/blaster/saltlib/saltlib:arrow' failed; build aborted: no such package '@pip2//pyyaml': BUILD file not found on package path
 INFO: Elapsed time: 18.842s
 INFO: 0 processes.
@@ -112,7 +112,7 @@ FAILED: Build did NOT complete successfully (74 packages loaded, 717 targets con
     currently loading: @pip2//pytest_mock ... (4 packages)
 ```
 
-This error does not occur until _after_ externel dependencies have been fetched and Bazel has proceeded to analyze the dependency tree. The only thing it indicates is that the `@pip2//pyyaml` package was not properly fetched, but it does not provide any useful context.
+This error does not occur until _after_ external dependencies have been fetched and Bazel has proceeded to analyze the dependency tree. The only thing it indicates is that the `@pip2//pyyaml` package was not properly fetched, but it does not provide any useful context.
 
 Try the following steps in order to resolve the issue:
 
@@ -120,7 +120,7 @@ Try the following steps in order to resolve the issue:
 
 Running this command before any build or test commands will remove all of the fetched external dependencies and force Bazel to start from scratch:
 
-```
+```sh
 bazel clean --expunge
 ```
 
@@ -128,7 +128,7 @@ bazel clean --expunge
 
 Bazel stores the fetched pip dependencies in the following directory:
 
-```
+```sh
 $(bazel info output_base)/external/pip<major>/
 ```
 
@@ -140,13 +140,13 @@ If the directory does not contain any wheel files, this can be an indication tha
 
 If the directory contains wheel files, there was most likely an error running the `create_pip_repository` tool. See `Try manually creating the pip repository to check for errors` below.
 
-For more information about the output directories created by Bazel, see https://docs.bazel.build/versions/master/output_directories.html.
+For more information about the output directories created by Bazel, see [the official documentation](https://docs.bazel.build/versions/master/output_directories.html).
 
 #### Make sure the required Python interpreters are available
 
 The correct Python interpreters for each major version must be available within the Bazel execution environment. To verify this, execute the following:
 
-```
+```sh
 cd $(bazel info output_base)
 python2.<minor> --version
 python3.<minor> --version
@@ -164,8 +164,8 @@ Bazel unfortunately swallows output from the tools that it executes when fetchin
 
 In order to debug the tool that is used for fetching the pip dependencies, execute the following commands:
 
-```
-python<major>.<minor> $(bazel info output_base)/external/com_apt_itude_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/<major>/requirements-<platform>.txt
+```sh
+python<major>.<minor> $(bazel info output_base)/external/com_128technology_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/<major>/requirements-<platform>.txt
 ```
 
 Where:

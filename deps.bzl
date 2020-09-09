@@ -69,14 +69,11 @@ def rules_128tech_deps():
 
     maybe(
         http_archive,
-        name = "com_apt_itude_rules_pip",
-        sha256 = "d63149e2f327c1411e1853bbc3379d978945d159da0602abc67e02373ee9206c",
-        strip_prefix = "rules_pip-aafdefd2bf1a9f6995669c1d744da493de9a7b75",
+        name = "com_128technology_rules_pip",
+        sha256 = "9642882586da0f504ab2c13f5d4421bd8d5b9c84d0822d51b7031f483c502f88",
+        strip_prefix = "rules_pip-fe10a421b30dfd6a4aa8dc750f0e9f34edf5dc0b",
         type = "tar.gz",
-        url = "https://github.com/apt-itude/rules_pip/archive/aafdefd2bf1a9f6995669c1d744da493de9a7b75.tar.gz",
-        patches = [Label("//thirdparty/pip:reproducible_wheel.patch")],
-        patch_args = ["-p1"],
-        patch_tool = "patch",
+        url = "https://github.com/128technology/rules_pip/archive/fe10a421b30dfd6a4aa8dc750f0e9f34edf5dc0b.tar.gz",
     )
 
     maybe(

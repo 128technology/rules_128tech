@@ -3,7 +3,7 @@ Thirdparty pip dependencies
 """
 
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-load("@com_apt_itude_rules_pip//rules:repository.bzl", "pip_repository")
+load("@com_128technology_rules_pip//rules:repository.bzl", "pip_repository")
 load("//python:versions.bzl", "PYTHON2", "PYTHON3")
 load("//python:pip.bzl", "pip_aliases")
 
