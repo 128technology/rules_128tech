@@ -23,6 +23,7 @@ def pytest_test(
         args = [],
         tags = [],
         shuffle = True,
+        coverage = True,
         **kwargs):
     """
     Create a pytest test target
@@ -35,7 +36,8 @@ def pytest_test(
         data(label_list): data files to include
         args(str_list): arguments to pass to pytest.
         tags(str_list): list of arbitrary text tag
-        shuffle(bool): if true, use pytest-randomly to shuffle tests in an arbitrary order
+        shuffle(bool): if true, use pytest-randomly to shuffle tests in an arbitrary order.
+        coverage(bool): if true, use pytest-cov to collect code coverage.
         **kwargs: anything else to pass to the underlying py_test rule
     """
     args = list(args)
@@ -57,16 +59,14 @@ def pytest_test(
         pytest_deps = ["@pip2and3//pytest"]
 
         if version == "PY3":
-            version_args.extend([
-                "--cov",
-                "--no-cov-on-fail",
-            ])
-
             pytest_deps.extend([
                 "@pip3//pytest_timeout",
-                "@pip3//pytest_cov",
                 "@pip3//pdbpp",
             ])
+
+            if coverage:
+                version_args.extend(["--cov", "--no-cov-on-fail"])
+                pytest_deps.append("@pip3//pytest_cov")
 
             if shuffle:
                 pytest_deps.append("@pip3//pytest_randomly")
