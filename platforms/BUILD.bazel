@@ -1,0 +1,25 @@
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load(":platforms.bzl", "PLATFORMS")
+
+package(default_visibility = ["//visibility:public"])
+
+[
+    config_setting(
+        name = platform,
+        constraint_values = ["@bazel_tools//platforms:%s" % platform],
+    )
+    for platform in PLATFORMS
+]
+
+# Create a config setting for each 2-tuple of (python version, system platform).
+[
+    selects.config_setting_group(
+        name = "%s_%s" % (py, platform),
+        match_all = [
+            "@rules_python//python:%s" % py,
+            ":%s" % platform,
+        ],
+    )
+    for py in ("PY2", "PY3")
+    for platform in PLATFORMS
+]

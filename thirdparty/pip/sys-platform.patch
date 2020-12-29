@@ -1,0 +1,158 @@
+diff --git a/defs.bzl b/defs.bzl
+index 591c300..5ec19ec 100644
+--- a/defs.bzl
++++ b/defs.bzl
+@@ -1,5 +1,7 @@
+ """Import pip requirements into Bazel."""
+ 
++load("@rules_python//python:defs.bzl", "py_test")
++
+ pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
+ 
+ def _execute(repository_ctx, arguments, quiet = False):
+@@ -52,6 +54,8 @@ def _pip_import_impl(repository_ctx):
+         str(repository_ctx.attr.repo_prefix),
+         "--quiet",
+         str(repository_ctx.attr.quiet),
++        "--sys_platform",
++        repository_ctx.attr.sys_platform,
+     ], quiet = repository_ctx.attr.quiet)
+     if result.return_code:
+         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
+@@ -94,6 +98,7 @@ The prefix for the bazel repository name.
+             default = True,
+             doc = "If stdout and stderr should be printed to the terminal.",
+         ),
++        "sys_platform": attr.string(),
+     },
+     implementation = _pip_import_impl,
+ )
+@@ -122,6 +127,8 @@ def _whl_impl(repository_ctx):
+         ),
+         "--package",
+         repository_ctx.attr.pkg,
++        "--sys_platform",
++        repository_ctx.attr.sys_platform,
+     ]
+     if repository_ctx.attr.extras:
+         args += [
+@@ -158,6 +165,7 @@ If the label is specified it will overwrite the python_interpreter attribute.
+             default = True,
+             doc = "If stdout and stderr should be printed to the terminal.",
+         ),
++        "sys_platform": attr.string(),
+     },
+     implementation = _whl_impl,
+ )
+@@ -192,8 +200,7 @@ def py_pytest_test(
+         if name == src.split("/", 1)[0]:
+             fail("rule name (%s) cannot be the same as the" +
+                  "directory of the tests (%s)" % (name, src))
+-
+-    native.py_test(
++    py_test(
+         name = name,
+         srcs = srcs,
+         main = "pytest_helper.py",
+diff --git a/src/piptool.py b/src/piptool.py
+index f81dd64..8fb8fb5 100644
+--- a/src/piptool.py
++++ b/src/piptool.py
+@@ -79,7 +79,14 @@ def repository_name(repo_prefix, name, version, python_version):
+ 
+ 
+ def whl_library(
+-    name, extras, repo_name, pip_repo_name, python_interpreter, timeout, quiet
++    name,
++    extras,
++    repo_name,
++    pip_repo_name,
++    python_interpreter,
++    timeout,
++    quiet,
++    sys_platform,
+ ):
+     """Generate whl_library snippets for a package and its extras.
+ 
+@@ -106,6 +113,7 @@ def whl_library(
+         pip_args = pip_args,
+         timeout = {timeout},
+         quiet = {quiet},
++        sys_platform = "{sys_platform}",
+     )""".format(
+         name=name,
+         repo_name=repo_name,
+@@ -114,6 +122,7 @@ def whl_library(
+         extras=",".join(['"%s"' % extra for extra in extras]),
+         timeout=timeout,
+         quiet=quiet,
++        sys_platform=sys_platform,
+     )
+ 
+ 
+@@ -155,17 +164,12 @@ def main():
+         required=True,
+     )
+     parser.add_argument(
+-        "--timeout",
+-        help="Timeout used for pip actions.",
+-        type=int,
+-        required=True,
++        "--timeout", help="Timeout used for pip actions.", type=int, required=True,
+     )
+     parser.add_argument(
+-        "--quiet",
+-        help="Make pip install action quiet.",
+-        type=bool,
+-        required=True,
++        "--quiet", help="Make pip install action quiet.", type=bool, required=True,
+     )
++    parser.add_argument("--sys_platform", default="")
+     args = parser.parse_args()
+ 
+     reqs = sorted(get_requirements(args.input), key=as_tuple)
+@@ -189,6 +193,7 @@ def main():
+                 sys.executable,
+                 args.timeout,
+                 args.quiet,
++                args.sys_platform,
+             )
+         )
+ 
+diff --git a/src/whl.py b/src/whl.py
+index 1a4f294..91cf4dd 100644
+--- a/src/whl.py
++++ b/src/whl.py
+@@ -193,9 +193,14 @@ def main():
+         action="append",
+         help="The set of extras for which to generate library targets.",
+     )
++    parser.add_argument("--sys_platform", default="")
+ 
+     args, pip_args = parser.parse_known_args()
+ 
++    if args.sys_platform != sys.platform:
++        _create_dummy_build_file(args.directory, args.sys_platform)
++        return
++
+     pip_args += ["-c", args.constraint]
+ 
+     configure_reproducible_wheels()
+@@ -259,5 +264,17 @@ exports_files(glob(["**/**"]))
+         f.write(result)
+ 
+ 
++def _create_dummy_build_file(directory, sys_platform):
++    result = """
++# This pypi package will only appear on platform "{sys_platform}"
++# but the current platform is "{platform}"
++""".format(
++        sys_platform=sys_platform, platform=sys.platform
++    )
++
++    with open(os.path.join(directory, "BUILD"), "w") as f:
++        f.write(result)
++
++
+ if __name__ == "__main__":
+     main()

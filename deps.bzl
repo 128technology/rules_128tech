@@ -14,10 +14,10 @@ def rules_128tech_deps():
     maybe(
         http_archive,
         name = "bazel_skylib",
-        sha256 = "eb5c57e4c12e68c0c20bc774bfbc60a568e800d025557bc4ea022c6479acc867",
-        strip_prefix = "bazel-skylib-0.6.0",
+        sha256 = "7ac0fa88c0c4ad6f5b9ffb5e09ef81e235492c873659e6bb99efb89d11246bcb",
+        strip_prefix = "bazel-skylib-1.0.3",
         type = "tar.gz",
-        url = "https://github.com/bazelbuild/bazel-skylib/archive/0.6.0.tar.gz",
+        url = "https://github.com/bazelbuild/bazel-skylib/archive/1.0.3.tar.gz",
     )
 
     # Subpar
@@ -65,15 +65,6 @@ def rules_128tech_deps():
         strip_prefix = "rules_python-54d1cb35cd54318d59bf38e52df3e628c07d4bbc",
         type = "tar.gz",
         url = "https://github.com/bazelbuild/rules_python/archive/54d1cb35cd54318d59bf38e52df3e628c07d4bbc.tar.gz",
-    )
-
-    maybe(
-        http_archive,
-        name = "com_128technology_rules_pip",
-        sha256 = "9642882586da0f504ab2c13f5d4421bd8d5b9c84d0822d51b7031f483c502f88",
-        strip_prefix = "rules_pip-fe10a421b30dfd6a4aa8dc750f0e9f34edf5dc0b",
-        type = "tar.gz",
-        url = "https://github.com/128technology/rules_pip/archive/fe10a421b30dfd6a4aa8dc750f0e9f34edf5dc0b.tar.gz",
     )
 
     maybe(
