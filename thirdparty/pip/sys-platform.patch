@@ -120,7 +120,7 @@ index f81dd64..8fb8fb5 100644
          )
  
 diff --git a/src/whl.py b/src/whl.py
-index 1a4f294..91cf4dd 100644
+index 1a4f294..45d4ac7 100644
 --- a/src/whl.py
 +++ b/src/whl.py
 @@ -193,9 +193,14 @@ def main():
@@ -138,7 +138,7 @@ index 1a4f294..91cf4dd 100644
      pip_args += ["-c", args.constraint]
  
      configure_reproducible_wheels()
-@@ -259,5 +264,17 @@ exports_files(glob(["**/**"]))
+@@ -259,5 +264,22 @@ exports_files(glob(["**/**"]))
          f.write(result)
  
  
@@ -146,6 +146,11 @@ index 1a4f294..91cf4dd 100644
 +    result = """
 +# This pypi package will only appear on platform "{sys_platform}"
 +# but the current platform is "{platform}"
++py_library(
++    name = "pkg",
++
++)
++
 +""".format(
 +        sys_platform=sys_platform, platform=sys.platform
 +    )
