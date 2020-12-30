@@ -37,20 +37,9 @@ def add_python_lint_tests(pylint = True, rcfile = None):
         if not should_add_lint_test(existing_rule):
             continue
 
-        name = existing_rule["name"]
-        srcs = existing_rule["srcs"]
-
         if "no-pylint" not in existing_rule["tags"]:
-            pylint_srcs.extend(srcs)
-            pylint_deps.append(name)
-
-            pylint_test(
-                name = "%s_pylint" % name,
-                srcs = srcs,
-                deps = depset(transitive = [depset([name])]),
-                rcfile = rcfile,
-                tags = ["manual"],
-            )
+            pylint_srcs.extend(existing_rule["srcs"])
+            pylint_deps.append(existing_rule["name"])
 
     if pylint:
         if not pylint_srcs:
