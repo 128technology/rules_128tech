@@ -113,7 +113,7 @@ def pytest_par(name, srcs, deps = [], args = [], **kwargs):
     # necessary for pytest to operate on tests and results from `zip_safe = False`.
 
     # lower case for this python file name avoids linting failures
-    main = "%s_main.py" % name.lower()
+    main = "%s_pytest_par_main.py" % name.lower()
 
     _pytest_par_binary_main(
         name = main,
@@ -127,6 +127,7 @@ def pytest_par(name, srcs, deps = [], args = [], **kwargs):
         main = main,
         deps = deps + ["@pip3//pytest"],
         zip_safe = False,
+        tags = ["no-pylint"],
         **kwargs
     )
 
