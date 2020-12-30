@@ -44,18 +44,15 @@ def pylint_test(
         pylint_data.append(rcfile)
         args.extend(["--rcfile", "$(location %s)" % rcfile])
 
-    # Our entrypoint uses this as an indicator.
-    # Only source files should come afterwards.
-    args.append("--")
+    _pylint_main(name = "%s_pylint_main" % name, srcs = srcs)
 
-    for src in srcs:
-        args.append("$(rootpaths %s)" % src)
+    main = "%s_pylint_main.py" % name
 
     py_test(
         name = name,
-        srcs = ["@rules_128tech//python/pylint:pylint_main.py"] + list(srcs),
+        srcs = [main] + list(srcs),
         data = pylint_data + data,
-        main = "pylint_main.py",
+        main = main,
         deps = depset(
             direct = [
                 "@rules_128tech//rules_128tech:sharder",
@@ -71,3 +68,29 @@ def pylint_test(
         tags = ["pylint", "lint"] + tags,
         **kwargs
     )
+
+def _impl(ctx):
+    ctx.actions.expand_template(
+        template = ctx.file._template,
+        output = ctx.outputs.main,
+        substitutions = {
+            "@SOURCES@": "\n".join([src.path for src in ctx.files.srcs]),
+        },
+    )
+
+_pylint_main = rule(
+    implementation = _impl,
+    attrs = {
+        "srcs": attr.label_list(
+            allow_files = [".py"],
+            mandatory = True,
+        ),
+        "_template": attr.label(
+            default = "//python/pylint:pylint_main.py",
+            allow_single_file = True,
+        ),
+    },
+    outputs = {
+        "main": "%{name}.py",
+    },
+)

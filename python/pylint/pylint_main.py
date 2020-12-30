@@ -10,14 +10,13 @@ import pylint
 from rules_128tech import sharder
 
 
+SOURCES = """
+@SOURCES@
+""".strip().splitlines()
+
+
 def main():
-    sep = sys.argv.index("--")
-    if sep == -1:
-        os.exit("expected to find '--' on the command line")
-
-    flags, files_to_lint = sys.argv[:sep], sys.argv[sep:]
-
-    sys.argv[:] = flags + sharder.filter_items(files_to_lint)
+    sys.argv += sharder.filter_items(SOURCES)
 
     pylint.run_pylint()
 
