@@ -1,0 +1,8 @@
+exports_files(["compile_pip_requirements_wrapper_template.sh"])
+
+filegroup(
+    name = "compile.zip",
+    srcs = ["@com_github_ali5h_rules_pip//src:compile"],
+    output_group = "python_zip_file",
+    visibility = ["//visibility:public"],
+)

@@ -1,1 +1,4 @@
-exports_files(["reproducible_wheel.patch"])
+exports_files([
+    "sys-platform.patch",
+    "export-all.patch",
+])

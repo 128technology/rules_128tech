@@ -1,5 +1,5 @@
 """
-Temporary shim to transition between python versions.
+Repository rule for creating layers of indirection that allow a cross-platform python experience.
 """
 
 _ROOT_BUILD_TEMPLATE = """
@@ -10,6 +10,8 @@ config_setting(
 """.strip()
 
 _PACKAGE_BUILD_TEMPLATE = """
+{load_statements}
+
 package(default_visibility = ["//visibility:public"])
 
 alias(
@@ -20,9 +22,12 @@ alias(
 )
 """.strip()
 
+def _safe_name(name):
+    return name.lower().replace("-", "_")
+
 def _parse_requirements(file_contents):
     return [
-        line.split(" ")[0].replace("-", "_")
+        line.split(" ")[0]
         for line in file_contents.splitlines()
     ]
 
@@ -42,9 +47,22 @@ def _generate_root_build_file(repository_ctx):
         content = build_file_contents,
     )
 
+def _generate_requirements_bzl(repository_ctx):
+    repository_ctx.file(
+        "requirements.bzl",
+        content = """
+def requirement(name):
+    \"\"\"Proxy the request for the requirement to the sub-package.\"\"\"
+    return "//" + _safe_name(name)
+
+def _safe_name(name):
+    return name.lower().replace("-", "_")
+""",
+    )
+
 def _generate_package_build_file(repository_ctx, name):
     select_conditions = [
-        " " * 8 + '"{config_setting}": "@{repo}//{name}",'.format(
+        " " * 8 + '"{config_setting}": {repo}_requirement("{name}"),'.format(
             config_setting = config_setting,
             repo = repo,
             name = name,
@@ -52,10 +70,17 @@ def _generate_package_build_file(repository_ctx, name):
         for config_setting, repo in repository_ctx.attr.select.items()
     ]
 
+    safe_name = _safe_name(name)
+    load_statements = [
+        """load("@{repo}//:requirements.bzl", {repo}_requirement = "requirement")""".format(repo = repo)
+        for repo in repository_ctx.attr.select.values()
+    ]
+
     repository_ctx.file(
-        "%s/BUILD" % name,
+        "%s/BUILD" % safe_name,
         content = _PACKAGE_BUILD_TEMPLATE.format(
-            name = name,
+            name = safe_name,
+            load_statements = "\n".join(load_statements),
             select_conditions = "\n".join(select_conditions),
         ),
     )
@@ -83,6 +108,8 @@ def _impl(repository_ctx):
     ])
 
     _generate_root_build_file(repository_ctx)
+
+    _generate_requirements_bzl(repository_ctx)
 
     for package_name in output_requirements:
         _generate_package_build_file(repository_ctx, package_name)
