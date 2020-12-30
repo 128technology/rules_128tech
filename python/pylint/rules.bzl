@@ -3,7 +3,6 @@ pylint https://www.pylint.org/
 """
 
 load("@rules_python//python:defs.bzl", "py_test")
-load("//python/entry_point:rules.bzl", "py_entry_point")
 load("//private:cfg.bzl", "DISABLE_COLOR")
 
 def _get_color_args():
@@ -37,13 +36,6 @@ def pylint_test(
         rcfile(label): pylint configuration file
         **kwargs(dict): arguments to pass to the native py_test rule
     """
-    entry_point_name = "%s_entry_point" % name
-    entry_point_output = ":%s.py" % entry_point_name
-
-    py_entry_point(
-        name = entry_point_name,
-        module = "pylint",
-    )
 
     args = list(args) + ["--score", "no"]
     pylint_data = list()
@@ -52,16 +44,21 @@ def pylint_test(
         pylint_data.append(rcfile)
         args.extend(["--rcfile", "$(location %s)" % rcfile])
 
+    # Our entrypoint uses this as an indicator.
+    # Only source files should come afterwards.
+    args.append("--")
+
     for src in srcs:
         args.append("$(rootpaths %s)" % src)
 
     py_test(
         name = name,
-        srcs = [entry_point_output] + list(srcs),
+        srcs = ["@rules_128tech//python/pylint:pylint_main.py"] + list(srcs),
         data = pylint_data + data,
-        main = entry_point_output,
+        main = "pylint_main.py",
         deps = depset(
             direct = [
+                "@rules_128tech//rules_128tech:sharder",
                 "@pip3//pylint",
                 # we need an explicit dep on toml because rules_pip doesn't support
                 # adding a dep on `isort[pyproject]`.

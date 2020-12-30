@@ -10,7 +10,7 @@ _AUTO_ADD_RULE_TYPES = [
     "py_test",
 ]
 
-def add_python_lint_tests(pylint = True, rcfile = None):
+def add_python_lint_tests(pylint = True, rcfile = None, **kwargs):
     """
     Add all the available static analysis available for each python target in the current BUILD file.
 
@@ -27,6 +27,7 @@ def add_python_lint_tests(pylint = True, rcfile = None):
     Args:
         pylint(bool): control whether pylint tests are created.
         rcfile(label): pylint configuration file
+        **kwargs: Pass other keyword arguments directly to pylint_test.
 
     """
 
@@ -50,6 +51,7 @@ def add_python_lint_tests(pylint = True, rcfile = None):
             srcs = depset(pylint_srcs).to_list(),
             deps = depset(transitive = [depset(pylint_deps)]),
             rcfile = rcfile,
+            **kwargs
         )
 
 def should_add_lint_test(existing_rule):

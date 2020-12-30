@@ -56,7 +56,10 @@ def pytest_test(
 
     for version, test_name in version_names:
         version_args = args
-        pytest_deps = ["@pip2and3//pytest"]
+        pytest_deps = [
+            "@pip2and3//pytest",
+            "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
+        ]
 
         if version == "PY3":
             pytest_deps.extend([
@@ -80,7 +83,9 @@ def pytest_test(
             deps = version_deps,
             data = data,
             python_version = version,
-            args = _get_color_args() + version_args,
+            args = _get_color_args() +
+                   version_args +
+                   ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
             tags = ["pytest"] + tags,
             **kwargs
         )

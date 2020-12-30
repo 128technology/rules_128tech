@@ -1,0 +1,13 @@
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "pytest_bazel_sharder",
+    testonly = True,
+    srcs = [
+        "__init__.py",
+        "pytest_bazel_sharder.py",
+    ],
+    deps = ["//rules_128tech:sharder"],
+)
