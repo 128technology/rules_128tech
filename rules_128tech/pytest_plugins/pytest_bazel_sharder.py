@@ -6,8 +6,6 @@ import itertools
 
 from rules_128tech import sharder
 
-LOG = logging.getLogger(__name__)
-
 
 def pytest_collection_modifyitems(config, items):
     items[:] = sharder.filter_items(items)
