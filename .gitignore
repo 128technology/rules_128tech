@@ -1,2 +1,5 @@
 **/bazel-*
 user.bazelrc
+
+**/__pycache__/
+*.py[cod]

@@ -56,7 +56,10 @@ def pytest_test(
 
     for version, test_name in version_names:
         version_args = args
-        pytest_deps = ["@pip2and3//pytest"]
+        pytest_deps = [
+            "@pip2and3//pytest",
+            "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
+        ]
 
         if version == "PY3":
             pytest_deps.extend([
@@ -80,7 +83,9 @@ def pytest_test(
             deps = version_deps,
             data = data,
             python_version = version,
-            args = _get_color_args() + version_args,
+            args = _get_color_args() +
+                   version_args +
+                   ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
             tags = ["pytest"] + tags,
             **kwargs
         )
@@ -108,7 +113,7 @@ def pytest_par(name, srcs, deps = [], args = [], **kwargs):
     # necessary for pytest to operate on tests and results from `zip_safe = False`.
 
     # lower case for this python file name avoids linting failures
-    main = "%s_main.py" % name.lower()
+    main = "%s_pytest_par_main.py" % name.lower()
 
     _pytest_par_binary_main(
         name = main,
@@ -122,6 +127,7 @@ def pytest_par(name, srcs, deps = [], args = [], **kwargs):
         main = main,
         deps = deps + ["@pip3//pytest"],
         zip_safe = False,
+        tags = ["no-pylint"],
         **kwargs
     )
 
