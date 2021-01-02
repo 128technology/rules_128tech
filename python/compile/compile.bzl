@@ -19,8 +19,12 @@ def _compile_pip_requirements_impl(ctx):
     py_toolchain = ctx.toolchains[_PY_TOOLCHAIN_TYPE]
     if ctx.attr.python_version == "PY3":
         py_runtime = py_toolchain.py3_runtime
+        pip_compile = ctx.executable._pip3_compile
+        pip_compile_files = ctx.files._pip3_compile
     else:
         py_runtime = py_toolchain.py2_runtime
+        pip_compile = ctx.executable._pip2_compile
+        pip_compile_files = ctx.files._pip2_compile
 
     if py_runtime.interpreter != None:
         # NOTE: we don't use an in-built interpreter so this might not be exactly correct.
@@ -34,7 +38,7 @@ def _compile_pip_requirements_impl(ctx):
         "@@REQUIREMENTS_IN_PATH@@": ctx.file.requirements_in.short_path,
         "@@REQUIREMENTS_TXT_PATH@@": requirements_txt_path,
         "@@PYTHON_INTERPRETER_PATH@@": python_interpreter,
-        "@@PIP_COMPILE_BINARY@@": ctx.executable._pip_compile.short_path,
+        "@@PIP_COMPILE_BINARY@@": pip_compile.short_path,
         "@@HEADER@@": ctx.attr.header,
     }
 
@@ -51,7 +55,7 @@ def _compile_pip_requirements_impl(ctx):
             files = (
                 ctx.files.requirements_in +
                 ctx.files.data +
-                ctx.files._pip_compile +
+                pip_compile_files +
                 py_runtime_files
             ),
         ),
@@ -69,7 +73,13 @@ compile_pip_requirements = rule(
         "requirements_txt": attr.string(default = "requirements.txt"),
         "python_version": attr.string(default = "PY3", values = ("PY2", "PY3")),
         "header": attr.string(default = "# This file is generated code. DO NOT EDIT."),
-        "_pip_compile": attr.label(
+        "_pip2_compile": attr.label(
+            default = Label("//python/compile:compile2.zip"),
+            allow_single_file = True,
+            cfg = "host",
+            executable = True,
+        ),
+        "_pip3_compile": attr.label(
             default = Label("//python/compile:compile.zip"),
             allow_single_file = True,
             cfg = "host",
