@@ -1,0 +1,392 @@
+diff --git a/README.md b/README.md
+index 9bc3714..a64e1e7 100644
+--- a/README.md
++++ b/README.md
+@@ -66,6 +66,16 @@ pip_import(
+ 
+    # set compile to true only if requirements files is not already compiled
+    # compile = True
++
++   # add extra build files to be added to extend the `rules_pip`.
++   # the content of the BUILD file is extended by appending the
++   # the content from the supplied file to the generated file for a pip
++   # pacakage.
++   # extra_build_files = {"tensorflow": "@//:src/tensorflow.BUILD"},
++
++   # add aliases for the extra targets defined in the build file above.
++   # The format for access via alias is {package}_{target}
++   # extra_build_targets = {"tensorflow": ["headers"]},
+ )
+ 
+ load("@pip_deps//:requirements.bzl", "pip_install")
+@@ -85,7 +95,8 @@ py_binary(
+     name = "main",
+     srcs = ["main.py"],
+     deps = [
+-        requirement("pip-module")
++        requirement("pip-module"),
++        requirement("tensorflow", target="//:headers"),
+     ]
+ )
+ ```
+@@ -98,6 +109,7 @@ py_binary(
+     srcs = ["main.py"],
+     deps = [
+         "@pip_deps//:pip-module"
++        "@pip_deps//:tensorflow_headers"
+     ]
+ )
+ ```
+diff --git a/defs.bzl b/defs.bzl
+index 591c300..9a327f6 100644
+--- a/defs.bzl
++++ b/defs.bzl
+@@ -1,5 +1,7 @@
+ """Import pip requirements into Bazel."""
+ 
++load("@rules_python//python:defs.bzl", "py_test")
++
+ pip_vendor_label = Label("@com_github_ali5h_rules_pip//:third_party/py/easy_install.py")
+ 
+ def _execute(repository_ctx, arguments, quiet = False):
+@@ -37,7 +39,7 @@ def _pip_import_impl(repository_ctx):
+         if result.return_code:
+             fail("pip_compile failed: %s (%s)" % (result.stdout, result.stderr))
+ 
+-    result = _execute(repository_ctx, [
++    args = [
+         python_interpreter,
+         repository_ctx.path(repository_ctx.attr._script),
+         "--name",
+@@ -52,7 +54,26 @@ def _pip_import_impl(repository_ctx):
+         str(repository_ctx.attr.repo_prefix),
+         "--quiet",
+         str(repository_ctx.attr.quiet),
+-    ], quiet = repository_ctx.attr.quiet)
++    ]
++
++    if repository_ctx.attr.extra_build_files:
++        args.extend(
++            [
++                "--extra-build-info",
++                str(
++                    struct(
++                        build_files = repository_ctx.attr.extra_build_files,
++                        build_targets = repository_ctx.attr.extra_build_targets,
++                    ).to_json(),
++                ),
++            ],
++        )
++
++    result = _execute(
++        repository_ctx,
++        args,
++        quiet = repository_ctx.attr.quiet,
++    )
+     if result.return_code:
+         fail("pip_import failed: %s (%s)" % (result.stdout, result.stderr))
+ 
+@@ -73,6 +94,15 @@ If the label is specified it will overwrite the python_interpreter attribute.
+ """),
+         "repo_prefix": attr.string(default = "pypi", doc = """
+ The prefix for the bazel repository name.
++"""),
++        "extra_build_files": attr.string_dict(default = {}, doc = """
++Additional targets to add to the BUILD files for a repository. The dictionary
++is a string->Label mapping that maps a dependency to additional build file content.
++"""),
++        "extra_build_targets": attr.string_list_dict(default = {}, doc = """
++Additional targets that the extra build file declares. Adding this creates an alias for
++them to be used conviniently. The standard form is {package_name}_{target_name}. The dictionary
++is a string->List[string] mapping where the list is the list of targets.
+ """),
+         "compile": attr.bool(
+             default = False,
+@@ -123,6 +153,12 @@ def _whl_impl(repository_ctx):
+         "--package",
+         repository_ctx.attr.pkg,
+     ]
++
++    if repository_ctx.attr.extra_build_file:
++        args += [
++            "--extra-build-file",
++            repository_ctx.path(repository_ctx.attr.extra_build_file),
++        ]
+     if repository_ctx.attr.extras:
+         args += [
+             "--extras=%s" % extra
+@@ -149,6 +185,9 @@ If the label is specified it will overwrite the python_interpreter attribute.
+ """),
+         "pip_args": attr.string_list(default = []),
+         "timeout": attr.int(default = 1200, doc = "Timeout for pip actions"),
++        "extra_build_file": attr.label(doc = """"
++Label to extra build file whose contents will be appended to the generated BUILD.
++"""),
+         "_script": attr.label(
+             executable = True,
+             default = Label("@com_github_ali5h_rules_pip//src:whl.py"),
+@@ -192,8 +231,7 @@ def py_pytest_test(
+         if name == src.split("/", 1)[0]:
+             fail("rule name (%s) cannot be the same as the" +
+                  "directory of the tests (%s)" % (name, src))
+-
+-    native.py_test(
++    py_test(
+         name = name,
+         srcs = srcs,
+         main = "pytest_helper.py",
+diff --git a/examples/WORKSPACE b/examples/WORKSPACE
+index fcf134c..d60787b 100644
+--- a/examples/WORKSPACE
++++ b/examples/WORKSPACE
+@@ -49,10 +49,16 @@ local_repository(
+ 
+ load("@com_github_ali5h_rules_pip//:defs.bzl", "pip_import")
+ 
++EXTRA_TARGETS = {
++    "numpy": ["custom_headers"],
++}
++
+ pip_import(
+     name = "piptool_deps_tests_3",
+     timeout = 1200,
+     compile = False,
++    extra_build_files = {k: "@//tests:{}.BUILD".format(k) for k in EXTRA_TARGETS},
++    extra_build_targets = EXTRA_TARGETS,
+     python_interpreter = "python3.8",
+     requirements = "//tests:requirements.txt",
+ )
+diff --git a/examples/tests/BUILD b/examples/tests/BUILD
+index 1dd50c1..5c4e44a 100644
+--- a/examples/tests/BUILD
++++ b/examples/tests/BUILD
+@@ -23,6 +23,17 @@ py_pytest_test(
+     ],
+ )
+ 
++py_pytest_test(
++    name = "test_extra_import",
++    srcs = ["test_extra_import.py"],
++    python_version = "PY3",
++    deps = [
++        ":_test_extra",
++        requirement("pytest"),
++        requirement("numpy"),
++    ],
++)
++
+ # using numpy headers target
+ py_extension(
+     name = "_test",
+@@ -31,3 +42,12 @@ py_extension(
+         requirement("numpy", "//:headers"),
+     ],
+ )
++
++# using extra build files
++py_extension(
++    name = "_test_extra",
++    srcs = ["test_numpy.c"],
++    deps = [
++        "@piptool_deps_tests_3//:numpy_custom_headers",
++    ],
++)
+diff --git a/examples/tests/numpy.BUILD b/examples/tests/numpy.BUILD
+new file mode 100644
+index 0000000..dde96e5
+--- /dev/null
++++ b/examples/tests/numpy.BUILD
+@@ -0,0 +1,5 @@
++cc_library(
++    name = "custom_headers",
++    hdrs = glob(["numpy/core/include/**/*.h"]),
++    includes = ["numpy/core/include"],
++)
+diff --git a/examples/tests/test_extra_import.py b/examples/tests/test_extra_import.py
+new file mode 100644
+index 0000000..efcf540
+--- /dev/null
++++ b/examples/tests/test_extra_import.py
+@@ -0,0 +1,3 @@
++def test_numpy_extra_build_file():
++    import numpy
++    import tests._test_extra
+diff --git a/examples/tests/test_numpy.c b/examples/tests/test_numpy.c
+index a3d395b..266b32e 100644
+--- a/examples/tests/test_numpy.c
++++ b/examples/tests/test_numpy.c
+@@ -15,3 +15,8 @@ PyMODINIT_FUNC PyInit__test(void) {
+   import_array();
+   return PyModule_Create(&moduledef);
+ }
++
++PyMODINIT_FUNC PyInit__test_extra(void) {
++  import_array();
++  return PyModule_Create(&moduledef);
++}
+diff --git a/src/piptool.py b/src/piptool.py
+index f81dd64..daaf53b 100644
+--- a/src/piptool.py
++++ b/src/piptool.py
+@@ -3,6 +3,7 @@ import logging
+ import os
+ import re
+ import sys
++import json
+ 
+ from pip._internal.network.session import PipSession
+ from pip._internal.req.req_file import parse_requirements
+@@ -79,7 +80,14 @@ def repository_name(repo_prefix, name, version, python_version):
+ 
+ 
+ def whl_library(
+-    name, extras, repo_name, pip_repo_name, python_interpreter, timeout, quiet
++    name,
++    extras,
++    repo_name,
++    pip_repo_name,
++    python_interpreter,
++    timeout,
++    quiet,
++    extra_build_file,
+ ):
+     """Generate whl_library snippets for a package and its extras.
+ 
+@@ -91,6 +99,7 @@ def whl_library(
+         python_interpreter:
+         timeout: timeout for pip actions
+         quiet: makes command run in quiet mode
++        extra_build_file: stuff for things
+     Returns:
+       str: whl_library rule definition
+     """
+@@ -106,6 +115,7 @@ def whl_library(
+         pip_args = pip_args,
+         timeout = {timeout},
+         quiet = {quiet},
++        {extra_build_file}
+     )""".format(
+         name=name,
+         repo_name=repo_name,
+@@ -114,6 +124,11 @@ def whl_library(
+         extras=",".join(['"%s"' % extra for extra in extras]),
+         timeout=timeout,
+         quiet=quiet,
++        extra_build_file=(
++            'extra_build_file=Label("%s"),' % extra_build_file
++            if extra_build_file
++            else ""
++        ),
+     )
+ 
+ 
+@@ -155,19 +170,22 @@ def main():
+         required=True,
+     )
+     parser.add_argument(
+-        "--timeout",
+-        help="Timeout used for pip actions.",
+-        type=int,
+-        required=True,
++        "--timeout", help="Timeout used for pip actions.", type=int, required=True,
+     )
+     parser.add_argument(
+-        "--quiet",
+-        help="Make pip install action quiet.",
+-        type=bool,
+-        required=True,
++        "--quiet", help="Make pip install action quiet.", type=bool, required=True,
++    )
++    parser.add_argument(
++        "--extra-build-info",
++        action="store",
++        help=("Json encoded extra build files required and their declared targets."),
++        type=str,
++        default="{}",
+     )
+     args = parser.parse_args()
+-
++    extra_build_info = json.loads(args.extra_build_info)
++    extra_build_files = extra_build_info.get("build_files", {})
++    extra_build_targets = extra_build_info.get("build_targets", {})
+     reqs = sorted(get_requirements(args.input), key=as_tuple)
+     python_version = "%d%d" % (sys.version_info[0], sys.version_info[1])
+     whl_targets = OrderedDict()
+@@ -179,7 +197,8 @@ def main():
+         # For every extra that is possible from this requirements.txt
+         for extra in extras:
+             whl_targets["%s[%s]" % (name, extra)] = "@%s//:%s" % (repo_name, extra)
+-
++        for target in extra_build_targets.get(name, []):
++            whl_targets["%s_%s" % (name, target)] = "@%s//:%s" % (repo_name, target)
+         whl_libraries.append(
+             whl_library(
+                 name,
+@@ -189,6 +208,7 @@ def main():
+                 sys.executable,
+                 args.timeout,
+                 args.quiet,
++                extra_build_files.get(name),
+             )
+         )
+ 
+diff --git a/src/whl.py b/src/whl.py
+index c28dc7e..7c5942e 100644
+--- a/src/whl.py
++++ b/src/whl.py
+@@ -164,6 +164,22 @@ cc_library(
+     )
+ 
+ 
++def get_extra_build_file_content(build_file):
++    """
++    Gets the string contents from the build file
++    :param build_file: Optional[str]
++    :return str: the contents read from the file. Empty otherwise.
++    """
++    # Early exit
++    if not build_file:
++        return ""
++    # Pass up all IO errors. We want to have a non zero exit code that would be caught by Bazel.
++    # FileNotFound error shouldn't happen normally cause we are passing a Label in the argument
++    # to this script using attr.Label which should always resolve to an existing path.
++    with open(build_file, "r") as f:
++        return f.read()
++
++
+ def main():
+     logging.basicConfig()
+     parser = argparse.ArgumentParser(
+@@ -193,11 +209,18 @@ def main():
+         action="append",
+         help="The set of extras for which to generate library targets.",
+     )
++    parser.add_argument(
++        "--extra-build-file",
++        action="store",
++        help="Path to the extra build file whose contents should be appended to generated BUILD.",
++    )
+ 
+     args, pip_args = parser.parse_known_args()
+ 
+     pip_args += ["-c", args.constraint]
+ 
++    extra_build_file_content = get_extra_build_file_content(args.extra_build_file)
++
+     configure_reproducible_wheels()
+ 
+     pkg = install_package(args.package, args.directory, pip_args)
+@@ -244,10 +267,12 @@ py_library(
+         {dependencies}
+     ],
+ )
+-{extras}""".format(
++{extras}
++{extra_build_file_content}""".format(
+         requirements=args.requirements,
+         dependencies=",".join(['requirement("%s")' % d for d in dependencies(pkg)]),
+         extras=extras,
++        extra_build_file_content=extra_build_file_content,
+     )
+ 
+     # clean up
