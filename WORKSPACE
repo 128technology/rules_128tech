@@ -19,6 +19,7 @@ http_archive(
         "//thirdparty/pip:prettier-errors.patch",
         "//thirdparty/pip:requirements-per-platform.patch",
         "//thirdparty/pip:compile2.patch",
+        "//thirdparty/pip:interpreter-per-platform.patch",
     ],
     sha256 = "983eecdfac362d8e7eeb8761ef96e17a3f860aac002bb2bb529adfa39620ddc8",
     strip_prefix = "rules_pip-0559f4dfb1bfce200dc8db5d8f1c011d1eb1aaff",

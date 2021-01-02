@@ -15,20 +15,26 @@ def pip_repositories():
     maybe(
         pip_import,
         name = "pip2_current",
-        python_interpreter = PYTHON2,
         requirements_per_platform = {
             "//thirdparty/pip/2:requirements-linux.txt": "linux",
             "//thirdparty/pip/2:requirements-osx.txt": "osx",
+        },
+        python_interpreter_per_platform = {
+            "/usr/bin/" % PYTHON2: "linux",
+            "/opt/128technology/bazel/bin/%s" % PYTHON2: "osx",
         },
     )
 
     maybe(
         pip_import,
         name = "pip3_current",
-        python_interpreter = PYTHON3,
         requirements_per_platform = {
             "//thirdparty/pip/3:requirements-linux.txt": "linux",
             "//thirdparty/pip/3:requirements-osx.txt": "osx",
+        },
+        python_interpreter_per_platform = {
+            "/usr/bin/" % PYTHON3: "linux",
+            "/opt/128technology/bazel/bin/%s" % PYTHON3: "osx",
         },
     )
 
