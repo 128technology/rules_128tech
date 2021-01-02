@@ -1,5 +1,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
+_PY_TOOLCHAIN_TYPE = "@bazel_tools//tools/python:toolchain_type"
+
 def _get_path_relative_to_workspace(path, ctx):
     if paths.is_absolute(path):
         return paths.relativize(path, "/")
@@ -14,10 +16,24 @@ def _compile_pip_requirements_impl(ctx):
         ctx,
     )
 
+    py_toolchain = ctx.toolchains[_PY_TOOLCHAIN_TYPE]
+    if ctx.attr.python_version == "PY3":
+        py_runtime = py_toolchain.py3_runtime
+    else:
+        py_runtime = py_toolchain.py2_runtime
+
+    if py_runtime.interpreter != None:
+        # NOTE: we don't use an in-built interpreter so this might not be exactly correct.
+        python_interpreter = py_runtime.interpreter.path
+        py_runtime_files = py_runtime.files
+    else:
+        python_interpreter = py_runtime.interpreter_path
+        py_runtime_files = []
+
     substitutions = {
         "@@REQUIREMENTS_IN_PATH@@": ctx.file.requirements_in.short_path,
         "@@REQUIREMENTS_TXT_PATH@@": requirements_txt_path,
-        "@@PYTHON_INTERPRETER_PATH@@": ctx.attr.python_interpreter,
+        "@@PYTHON_INTERPRETER_PATH@@": python_interpreter,
         "@@PIP_COMPILE_BINARY@@": ctx.executable._pip_compile.short_path,
         "@@HEADER@@": ctx.attr.header,
     }
@@ -29,17 +45,16 @@ def _compile_pip_requirements_impl(ctx):
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(
-        files = (
-            ctx.files.requirements_in +
-            ctx.files.data +
-            ctx.files._pip_compile
-        ),
-    )
-
     return [DefaultInfo(
         files = depset([out_file]),
-        runfiles = runfiles,
+        runfiles = ctx.runfiles(
+            files = (
+                ctx.files.requirements_in +
+                ctx.files.data +
+                ctx.files._pip_compile +
+                py_runtime_files
+            ),
+        ),
         executable = out_file,
     )]
 
@@ -52,7 +67,7 @@ compile_pip_requirements = rule(
         ),
         "data": attr.label_list(allow_files = True),
         "requirements_txt": attr.string(default = "requirements.txt"),
-        "python_interpreter": attr.string(default = "python"),
+        "python_version": attr.string(default = "PY3", values = ("PY2", "PY3")),
         "header": attr.string(default = "# This file is generated code. DO NOT EDIT."),
         "_pip_compile": attr.label(
             default = Label("//python/compile:compile.zip"),
@@ -65,5 +80,6 @@ compile_pip_requirements = rule(
             allow_single_file = True,
         ),
     },
+    toolchains = [_PY_TOOLCHAIN_TYPE],
     executable = True,
 )
