@@ -1,0 +1,46 @@
+diff --git a/src/whl.py b/src/whl.py
+index 7c5942e..4b3216d 100644
+--- a/src/whl.py
++++ b/src/whl.py
+@@ -6,6 +6,7 @@ import os
+ import shutil
+ import sys
+ 
++from pip._internal.cli.status_codes import ERROR
+ from pip._internal.commands import create_command
+ from pip._vendor import pkg_resources
+ 
+@@ -72,7 +73,8 @@ def install_package(pkg, directory, pip_args):
+         pkg,
+     ] + pip_args
+     cmd = create_command("install")
+-    cmd.main(pip_args)
++    if cmd.main(pip_args) == ERROR:
++        raise _Error
+ 
+     # need dist-info directory for pkg_resources to be able to find the packages
+     dist_info = glob.glob(os.path.join(directory, "*.dist-info"))[0]
+@@ -101,6 +103,10 @@ def install_package(pkg, directory, pip_args):
+     return pkginfo.Wheel(dist_info)
+ 
+ 
++class _Error(Exception):
++    pass
++
++
+ def dependencies(pkg, extra=None):
+     """Find dependencies of a wheel.
+ 
+@@ -223,7 +229,11 @@ def main():
+ 
+     configure_reproducible_wheels()
+ 
+-    pkg = install_package(args.package, args.directory, pip_args)
++    try:
++        pkg = install_package(args.package, args.directory, pip_args)
++    except _Error:
++        sys.exit(1)
++
+     extras_list = [
+         """
+ py_library(
