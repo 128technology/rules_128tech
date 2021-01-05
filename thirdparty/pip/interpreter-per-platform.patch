@@ -1,0 +1,40 @@
+diff --git a/defs.bzl b/defs.bzl
+index 721f7a7..c1f4f83 100644
+--- a/defs.bzl
++++ b/defs.bzl
+@@ -22,6 +22,15 @@ def _select_requirements_for_platform(repository_ctx):
+         attr = "pip_repository",
+     )
+ 
++def _select_interpreter_for_platform(repository_ctx):
++    current_platform = _get_platform(repository_ctx)
++
++    for label, intended_platform in repository_ctx.attr.python_interpreter_per_platform.items():
++        if intended_platform == current_platform:
++            return repository_ctx.path(label)
++
++    fail("None of the given python interpreters files match the current environment")
++
+ def _execute(repository_ctx, arguments, quiet = False):
+     pip_vendor = str(repository_ctx.path(pip_vendor_label).dirname)
+     return repository_ctx.execute(arguments, environment = {
+@@ -34,6 +43,8 @@ def _pip_import_impl(repository_ctx):
+     python_interpreter = repository_ctx.attr.python_interpreter
+     if repository_ctx.attr.python_runtime:
+         python_interpreter = repository_ctx.path(repository_ctx.attr.python_runtime)
++    if repository_ctx.attr.python_interpreter_per_platform:
++        python_interpreter = _select_interpreter_for_platform(repository_ctx)
+ 
+     if repository_ctx.attr.requirements:
+         requirements_path = repository_ctx.path(repository_ctx.attr.requirements)
+@@ -120,6 +131,10 @@ pip_import = repository_rule(
+ The command to run the Python interpreter used to invoke pip and unpack the
+ wheels.
+ """),
++        "python_interpreter_per_platform": attr.string_dict(
++            allow_empty = False,
++            doc = "dict mapping from python interpreter to the platform it's applicable on",
++        ),
+         "python_runtime": attr.label(doc = """
+ The label to the Python run-time interpreted used to invoke pip and unpack the wheels.
+ If the label is specified it will overwrite the python_interpreter attribute.
