@@ -1,9 +1,8 @@
 load("//python/compile:compile.bzl", "compile_pip_requirements")
-load("//python:versions.bzl", "PYTHON2")
 
 compile_pip_requirements(
     name = "compile",
-    python_interpreter = PYTHON2,
+    python_version = "PY2",
     requirements_in = ":requirements.in",
     requirements_txt = select({
         "//platforms:linux": "requirements-linux.txt",
