@@ -20,7 +20,7 @@ def pip_repositories():
             "//thirdparty/pip/2:requirements-osx.txt": "osx",
         },
         python_interpreter_per_platform = {
-            "/usr/bin/" % PYTHON2: "linux",
+            "/usr/bin/%s" % PYTHON2: "linux",
             "/opt/128technology/bazel/bin/%s" % PYTHON2: "osx",
         },
     )
@@ -33,7 +33,7 @@ def pip_repositories():
             "//thirdparty/pip/3:requirements-osx.txt": "osx",
         },
         python_interpreter_per_platform = {
-            "/usr/bin/" % PYTHON3: "linux",
+            "/usr/bin/%s" % PYTHON3: "linux",
             "/opt/128technology/bazel/bin/%s" % PYTHON3: "osx",
         },
     )

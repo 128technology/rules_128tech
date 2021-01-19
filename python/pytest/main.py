@@ -10,6 +10,7 @@ import pytest
 
 
 def main():
+    sys.argv[:] = sys.argv[:1] + _junit_flags() + sys.argv[1:]
     exit_code = pytest.main()
 
     save_coverage_report()
@@ -22,6 +23,14 @@ def main():
     # https://docs.pytest.org/en/latest/usage.html#possible-exit-codes
     if exit_code != 5:
         sys.exit(exit_code)
+
+
+def _junit_flags():
+    try:
+        path = os.environ["XML_OUTPUT_FILE"]
+    except KeyError:
+        return []
+    return ["--junit-xml", path]
 
 
 # TODO: instead of hacking our own coverage tools we should use `bazel coverage` and
