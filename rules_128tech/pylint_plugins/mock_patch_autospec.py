@@ -5,9 +5,6 @@ setting autospec=True.
 Based on http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
 """
 
-# Required because this is a dynamically loaded plugin:
-# pylint:disable=no-name-in-module,import-error
-
 import astroid
 import astroid.node_classes
 from pylint.checkers import BaseChecker
@@ -46,8 +43,7 @@ class MockPatchAutospecChecker(BaseChecker):
             return
 
         if not isinstance(call.func.expr, astroid.node_classes.Name):
-            # A method call on a complex expression, literal, or something,
-            # too complex to deal with
+            # A method call on a complex expression, literal, or something
             return
 
         if call.func.expr.name not in ("mock", "mocker"):
