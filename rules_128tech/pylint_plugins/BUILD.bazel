@@ -1,0 +1,18 @@
+load("@rules_python//python:defs.bzl", "py_library")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "mock_patch_autospec",
+    testonly = True,
+    srcs = [
+        ":__init__.py",
+        ":mock_patch_autospec.py",
+    ],
+    imports = ["."],
+    srcs_version = "PY3",
+    deps = [
+        "@pip3//astroid",
+        "@pip3//pylint",
+    ],
+)

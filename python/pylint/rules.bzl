@@ -37,7 +37,12 @@ def pylint_test(
         **kwargs(dict): arguments to pass to the native py_test rule
     """
 
-    args = list(args) + ["--score", "no"]
+    args = list(args) + [
+        "--score",
+        "no",
+        "--load-plugins",
+        "mock_patch_autospec",
+    ]
     pylint_data = list()
 
     if rcfile != None:
@@ -55,11 +60,12 @@ def pylint_test(
         main = main,
         deps = depset(
             direct = [
-                "@rules_128tech//rules_128tech:sharder",
                 "@pip3//pylint",
                 # we need an explicit dep on toml because rules_pip doesn't support
                 # adding a dep on `isort[pyproject]`.
                 "@pip3//toml",
+                "@rules_128tech//rules_128tech:sharder",
+                "@rules_128tech//rules_128tech/pylint_plugins:mock_patch_autospec",
             ],
             transitive = [depset(deps)],
         ),
