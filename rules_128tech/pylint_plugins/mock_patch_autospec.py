@@ -24,7 +24,7 @@ class MockPatchAutospecChecker(BaseChecker):
     priority = -1
     msgs = {
         "W1280": (
-            "Using %s without explicitly setting `autospec` is not recommended.",
+            "Using `%s` without explicitly setting `autospec` is not recommended.",
             name,
             (
                 "All mock patches should use autospec=True to avoid allowing calls "
