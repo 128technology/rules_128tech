@@ -1,7 +1,6 @@
 """Unit tests for the mock_patch_autospec plugin"""
 
 import contextlib
-from unittest import mock
 
 import astroid
 import astroid.node_classes
@@ -9,7 +8,6 @@ import pytest
 from pylint import testutils
 
 from rules_128tech.pylint_plugins import mock_patch_autospec
-
 
 _MOCK_PATCH_TEST_CASES = [
     pytest.param('("foo")', True, id="no_autospec",),
@@ -84,6 +82,11 @@ class TestUnittestMockPatch(testutils.CheckerTestCase):
             pytest.param(
                 "from unittest import mock", "mock.patch", id="partially_qualified"
             ),
+            pytest.param(
+                "from unittest import mock as aliased_mock",
+                "aliased_mock.patch",
+                id="partially_qualified_aliased",
+            ),
         ],
     )
     @pytest.mark.parametrize(
@@ -134,6 +137,14 @@ class TestUnittestMockPatch(testutils.CheckerTestCase):
                 "mock.patch.object",
                 id="partially_qualified",
             ),
+            pytest.param(
+                """
+                import time
+                from unittest import mock as aliased_mock
+                """,
+                "aliased_mock.patch.object",
+                id="partially_qualified_aliased",
+            ),
         ],
     )
     @pytest.mark.parametrize(
@@ -182,6 +193,14 @@ class TestUnittestMockPatch(testutils.CheckerTestCase):
                 from unittest import mock
                 """,
                 "mock.patch.dict",
+                id="partially_qualified",
+            ),
+            pytest.param(
+                """
+                import os
+                from unittest import mock as aliased_mock
+                """,
+                "aliased_mock.patch.dict",
                 id="partially_qualified",
             ),
         ],
