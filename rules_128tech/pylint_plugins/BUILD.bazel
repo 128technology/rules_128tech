@@ -1,0 +1,25 @@
+load("@rules_python//python:defs.bzl", "py_library")
+load("@rules_128tech//python/pytest:rules.bzl", "pytest_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "mock_patch_autospec",
+    testonly = True,
+    srcs = [
+        ":__init__.py",
+        ":mock_patch_autospec.py",
+    ],
+    srcs_version = "PY3",
+    deps = [
+        "@pip3//astroid",
+        "@pip3//pylint",
+    ],
+)
+
+pytest_test(
+    name = "mock_patch_autospec_test",
+    srcs = [":mock_patch_autospec_test.py"],
+    python_version = "PY3",
+    deps = [":mock_patch_autospec"],
+)
