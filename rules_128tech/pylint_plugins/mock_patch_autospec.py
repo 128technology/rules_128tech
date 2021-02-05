@@ -72,7 +72,7 @@ class MockPatchAutospecChecker(BaseChecker):
                 self._check_patch_call(call)
                 return
 
-            # Pytest-mock fixtures are named "mocker" or "<scope>_mocker"
+            # Pytest-mock fixtures are named `mocker` or `<scope>_mocker`
             if isinstance(
                 lookup, astroid.node_classes.AssignName
             ) and lookup.name.endswith("mocker"):
@@ -83,18 +83,14 @@ class MockPatchAutospecChecker(BaseChecker):
         assert isinstance(call.func, astroid.node_classes.Attribute)
 
         if call.func.attrname == "patch" and call.args and len(call.args) > 1:
-            # "new" is the second arg, and is incompatible with autospec
+            # `new` is the second arg, and is incompatible with autospec
             return
         elif call.func.attrname == "object" and call.args and len(call.args) > 2:
-            # "new" is the third arg for patch.object()
+            # `new` is the third arg for patch.object()
             return
 
-        if call.keywords:
-            for keyword in call.keywords:
-                if keyword.arg in ("new", "spec", "spec_set", "autospec"):
-                    # All of these args are incompatible with one another, as
-                    # long as one of them specified we are good
-                    return
-
-        # We looked at all the kwargs and didn't find 'autospec' or 'new', uh-oh
-        self.add_message(self.name, node=call, args=(call.func.as_string(),))
+        kwargs = {keyword.arg for keyword in (call.keywords or [])}
+        # All of these args are incompatible with one another, as
+        # long as at least one of them is specified, we are good
+        if not kwargs.intersection({"new", "spec", "spec_set", "autospec"}):
+            self.add_message(self.name, node=call, args=(call.func.as_string(),))
