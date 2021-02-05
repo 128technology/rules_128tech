@@ -41,7 +41,7 @@ def pylint_test(
         "--score",
         "no",
         "--load-plugins",
-        "mock_patch_autospec",
+        "rules_128tech.pylint_plugins.mock_patch_autospec",
     ]
     pylint_data = list()
 

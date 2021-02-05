@@ -20,15 +20,17 @@ class MockPatchAutospecChecker(BaseChecker):
 
     __implements__ = IAstroidChecker
 
-    name = "mock-patch-autospec"
+    name = "t128-mock-patch-autospec"
     priority = -1
     msgs = {
         "W1280": (
-            "Uses mock.patch without autospec=True.",
+            "Using %s without explicitly setting `autospec` is not recommended.",
             name,
             (
                 "All mock patches should use autospec=True to avoid allowing calls "
-                "to functions that don't exist in production code"
+                "to functions that don't exist in production code. See "
+                "https://docs.python.org/3.6/library/unittest.mock.html?#autospeccing "
+                "for more details"
             ),
         ),
     }

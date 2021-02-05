@@ -9,7 +9,6 @@ py_library(
         ":__init__.py",
         ":mock_patch_autospec.py",
     ],
-    imports = ["."],
     srcs_version = "PY3",
     deps = [
         "@pip3//astroid",
