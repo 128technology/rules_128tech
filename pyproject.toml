@@ -1,0 +1,19 @@
+[tool.black]
+line-length = 88
+include = '\.py$'
+
+[tool.isort]
+# See https://github.com/timothycrosley/isort/issues/694
+# on how this configuration is valid with black.
+line_length=88
+multi_line_output=3
+lines_after_imports=2
+include_trailing_comma=true
+combine_as_imports=true
+
+default_section="THIRDPARTY"
+
+# necessary when experiencing incorrect "wrong-import-order" linting errors
+known_first_party = [
+    "rules_128tech"
+]
