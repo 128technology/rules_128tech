@@ -10,8 +10,8 @@ import zipfile
 from typing import Iterable, Optional, TextIO
 
 import click
-
 import coverage
+
 
 # All logs are written to stderr.
 # pylint: disable=invalid-name
@@ -80,6 +80,11 @@ def chdir_to_workspace_root():
     ),
 )
 @click.option(
+    "--xml-report",
+    type=click.Path(exists=False, file_okay=True, dir_okay=False),
+    help="Path where to write the XML coverage report.",
+)
+@click.option(
     "--short-report",
     type=click.File("w"),
     default="-",
@@ -97,6 +102,7 @@ def main(
     test_mode: str,
     save_merged_data: bool,
     html_report_dir: os.PathLike,
+    xml_report: Optional[os.PathLike],
     short_report: TextIO,
     open_report: bool,
     rcfile: Optional[os.PathLike],
@@ -140,6 +146,7 @@ def main(
         reporter,
         html_output=html_report_dir,
         short_output=short_report,
+        xml_output=xml_report,
         ignore_errors=True,
         omit=omit,
         include=include,
@@ -192,6 +199,7 @@ def generate_output(
     reporter: coverage.coverage,
     html_output: os.PathLike,
     short_output: TextIO,
+    xml_output: Optional[os.PathLike],
     **kwargs,
 ) -> pathlib.Path:
     """
@@ -209,6 +217,8 @@ def generate_output(
     html_output = pathlib.Path(html_output)
     shutil.rmtree(html_output, ignore_errors=True)
     reporter.html_report(directory=str(html_output), **kwargs)
+    if xml_output:
+        reporter.xml_report(outfile=str(xml_output), **kwargs)
     reporter.report(file=short_output, **kwargs)
     return html_output / "index.html"
 
