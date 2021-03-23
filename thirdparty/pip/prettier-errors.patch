@@ -1,5 +1,5 @@
 diff --git a/src/whl.py b/src/whl.py
-index 7c5942e..865a2db 100644
+index 7c5942e..c130fdd 100644
 --- a/src/whl.py
 +++ b/src/whl.py
 @@ -6,6 +6,7 @@ import os
@@ -17,7 +17,7 @@ index 7c5942e..865a2db 100644
 -    cmd.main(pip_args)
 +    status_code = cmd.main(pip_args)
 +    if status_code != SUCCESS:
-+        raise _Error(return_code)
++        raise _Error(status_code)
  
      # need dist-info directory for pkg_resources to be able to find the packages
      dist_info = glob.glob(os.path.join(directory, "*.dist-info"))[0]
