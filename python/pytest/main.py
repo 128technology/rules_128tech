@@ -10,7 +10,9 @@ import pytest
 
 
 def main():
-    sys.argv[:] = sys.argv[:1] + _junit_flags() + sys.argv[1:]
+    old = sys.argv
+
+    sys.argv[:] = sys.argv[:1] + _junit_flags(old) + sys.argv[1:]
     exit_code = pytest.main()
 
     save_coverage_report()
@@ -25,12 +27,19 @@ def main():
         sys.exit(exit_code)
 
 
-def _junit_flags():
+def _junit_flags(argv):
+    if _has_flag(argv, "--junit-xml"):
+        return []
+
     try:
         path = os.environ["XML_OUTPUT_FILE"]
     except KeyError:
         return []
     return ["--junit-xml", path]
+
+
+def _has_flag(argv, flag):
+    return any(arg.startswith(flag + "=") or arg == flag for arg in argv)
 
 
 # TODO: instead of hacking our own coverage tools we should use `bazel coverage` and
