@@ -12,7 +12,7 @@ import pytest
 def main():
     old = sys.argv
 
-    sys.argv[:] = sys.argv[:1] + _junit_flags(old) + sys.argv[1:]
+    sys.argv[:] = sys.argv[:1] + _junit_args(old) + _fail_fast_flag(old) + sys.argv[1:]
     exit_code = pytest.main()
 
     save_coverage_report()
@@ -27,8 +27,8 @@ def main():
         sys.exit(exit_code)
 
 
-def _junit_flags(argv):
-    if _has_flag(argv, "--junit-xml"):
+def _junit_args(argv):
+    if _has_arg(argv, "--junit-xml"):
         return []
 
     try:
@@ -38,8 +38,30 @@ def _junit_flags(argv):
     return ["--junit-xml", path]
 
 
-def _has_flag(argv, flag):
-    return any(arg.startswith(flag + "=") or arg == flag for arg in argv)
+def _has_arg(argv, name):
+    return any(arg.startswith(name + "=") or arg == name for arg in argv)
+
+
+def _fail_fast_flag(argv):
+    if _has_flags(argv, "-x", "--exitfirst"):
+        return []
+
+    try:
+        # If `--test_runner_fail_fast` is passed to bazel then this envionment variable
+        # will be set. As noted here, https://github.com/bazelbuild/bazel/issues/11667,
+        # this is not currently documented anywhere.
+        fail_fast = os.environ["TESTBRIDGE_TEST_RUNNER_FAIL_FAST"]
+    except KeyError:
+        return []
+
+    if not fail_fast or fail_fast == "0":
+        return []
+
+    return ["--exitfirst"]
+
+
+def _has_flags(argv, *names):
+    return any(arg in names for arg in argv)
 
 
 # TODO: instead of hacking our own coverage tools we should use `bazel coverage` and
