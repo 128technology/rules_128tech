@@ -105,14 +105,14 @@ Bazel provides little to no information while resolving/retrieving external depe
 For example, Bazel commonly prints error messages like the following:
 
 ```txt
-ERROR: Analysis of target '//packaging/apps/blaster/saltlib/saltlib:arrow' failed; build aborted: no such package '@pip2//pyyaml': BUILD file not found on package path
+ERROR: Analysis of target '//packaging/apps/blaster/saltlib/saltlib:arrow' failed; build aborted: no such package '@pip3//pyyaml': BUILD file not found on package path
 INFO: Elapsed time: 18.842s
 INFO: 0 processes.
 FAILED: Build did NOT complete successfully (74 packages loaded, 717 targets configured)
-    currently loading: @pip2//pytest_mock ... (4 packages)
+    currently loading: @pip3//pytest_mock ... (4 packages)
 ```
 
-This error does not occur until _after_ external dependencies have been fetched and Bazel has proceeded to analyze the dependency tree. The only thing it indicates is that the `@pip2//pyyaml` package was not properly fetched, but it does not provide any useful context.
+This error does not occur until _after_ external dependencies have been fetched and Bazel has proceeded to analyze the dependency tree. The only thing it indicates is that the `@pip3//pyyaml` package was not properly fetched, but it does not provide any useful context.
 
 Try the following steps in order to resolve the issue:
 
@@ -134,7 +134,7 @@ $(bazel info output_base)/external/pip<major>/
 
 Where:
 
-`<major>` is the major Python version for which the problem is occurring (indicated by `@pip2` or `@pip3`)
+`<major>` is the major Python version for which the problem is occurring (indicated by `@pip3` or `@pip3`)
 
 If the directory does not contain any wheel files, this can be an indication that the `create_pip_repository` tool never ran due to the Python interpreter not being available. See `Make sure the required Python interpreters are available` below.
 
@@ -170,7 +170,7 @@ python<major>.<minor> $(bazel info output_base)/external/com_128technology_rules
 
 Where:
 
-`<major>` is the major Python version for which the problem is occurring (indicated by `@pip2` or `@pip3`)
+`<major>` is the major Python version for which the problem is occurring (indicated by `@pip3` or `@pip3`)
 
 `<minor>` is the minor Python version that the repo currently uses for the given major version (see `python/versions.bzl`)
 

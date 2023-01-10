@@ -3,7 +3,7 @@ wrappers around subpar
 """
 
 load("@subpar//:subpar.bzl", original_par_binary = "par_binary")
-load("//python:versions.bzl", "PYTHON2", "PYTHON3")
+load("//python:versions.bzl", "PYTHON3")
 
 def par_binary(
         name,
@@ -41,21 +41,12 @@ def par_binary(
     original_par_binary(
         name = name,
         compiler = "@subpar//compiler",
-        compiler_args = compiler_args or _get_compiler_args(python_version),
+        compiler_args = compiler_args or ["--interpreter", "/usr/bin/env %s" % PYTHON3],
         python_version = python_version,
         zip_safe = zip_safe,
         extract_dir = extract_dir,
         **kwargs
     )
-
-def _get_compiler_args(python_version):
-    if python_version == "PY2":
-        return ["--interpreter", "/usr/bin/env %s" % PYTHON2]
-
-    if python_version == "PY3":
-        return ["--interpreter", "/usr/bin/env %s" % PYTHON3]
-
-    fail("Python version must be 'PY2' or 'PY3'")
 
 def parkour(name, srcs = [], python_version = "PY3", **kwargs):
     """

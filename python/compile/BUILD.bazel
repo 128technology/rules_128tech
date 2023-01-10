@@ -6,10 +6,3 @@ filegroup(
     output_group = "python_zip_file",
     visibility = ["//visibility:public"],
 )
-
-filegroup(
-    name = "compile2.zip",
-    srcs = ["@com_github_ali5h_rules_pip//src:compile2"],
-    output_group = "python_zip_file",
-    visibility = ["//visibility:public"],
-)
