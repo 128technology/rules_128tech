@@ -45,13 +45,10 @@ def pytest_test(
 
     pytest_deps = [
         "@pip3//pytest",
-        "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
-    ]
-
-    pytest_deps.extend([
         "@pip3//pytest_timeout",
         "@pip3//pdbpp",
-    ])
+        "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
+    ]
 
     if coverage:
         args.extend(["--cov", "--no-cov-on-fail"])

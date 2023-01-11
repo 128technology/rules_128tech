@@ -3,11 +3,8 @@
 ## Overview
 
 All external pip dependencies for the entire workspace are defined here.
-Dependencies for Python 2 code and Python 3 code are managed separately since
-the transitive dependencies for any direct dependency may differ between
-versions. However, there is only a single dependency set for each major version
-because the entire workspace uses the same minor version (e.g. all Python 3 code
-uses 3.6).
+There is only a single dependency set because the entire workspace uses the same
+version of python.
 
 ## requirements.in
 
@@ -35,8 +32,8 @@ to fetch.
 1. Add the distribution name of the pip dependency (i.e. the name you would pass
    to a `pip install` command) to the `requirements.in` file for the desired
    major Python version. **NOTE**: this file should be alpha-ordered.
-1. Run `bazel run //thirdparty/pip/<version>:compile` on your Mac
-1. Run `bazel run //thirdparty/pip/<version>:compile` on your Linux
+1. Run `bazel run //thirdparty/pip/3:compile` on your Mac
+1. Run `bazel run //thirdparty/pip/3:compile` on your Linux
    VM
 1. Make sure both generated files are copied to the machine you use for source
    control (i.e. that's where you perform `git commit` and `git push` operations)
@@ -50,24 +47,24 @@ to fetch.
 
 ## Updating a single dependency
 
-1. Run `bazel run //thirdparty/pip/<version>:compile -- -P <name>` on
+1. Run `bazel run //thirdparty/pip/3:compile -- -P <name>` on
    your Mac
-1. Run `bazel run //thirdparty/pip/<version>:compile -- -P <name>` on
+1. Run `bazel run //thirdparty/pip/3:compile -- -P <name>` on
    your Linux VM
 1. Follow steps 4-5 from "Adding a new dependency"
 
 ## Updating all dependencies
 
-1. Run `bazel run //thirdparty/pip/<version>:compile -- -U` on your
+1. Run `bazel run //thirdparty/pip/3:compile -- -U` on your
    Mac
-1. Run `bazel run //thirdparty/pip/<version>:compile -- -U` on your
+1. Run `bazel run //thirdparty/pip/3:compile -- -U` on your
    Linux VM
 1. Follow steps 4-5 from "Adding a new dependency"
 
 ## Declaring dependencies in BUILD.bazel files
 
 Python Bazel rules can declare dependencies on any package defined in a
-`requirements.in` file using the label format `@pip<version>//<package-name>`.
+`requirements.in` file using the label format `@pip3//<package-name>`.
 
 `version` will be the major Python version for which the dependency was defined
 
@@ -98,9 +95,11 @@ py_library(
 
 ## Debugging
 
-### `no such package '@pip<x>//<y>': BUILD file not found on package path`
+### `no such package '@pip3>//<y>': BUILD file not found on package path`
 
-Bazel provides little to no information while resolving/retrieving external dependencies, so it can be difficult to triage issues that arise with missing or broken pip dependencies.
+Bazel provides little to no information while resolving/retrieving external
+dependencies, so it can be difficult to triage issues that arise with missing or
+broken pip dependencies.
 
 For example, Bazel commonly prints error messages like the following:
 
@@ -112,13 +111,17 @@ FAILED: Build did NOT complete successfully (74 packages loaded, 717 targets con
     currently loading: @pip3//pytest_mock ... (4 packages)
 ```
 
-This error does not occur until _after_ external dependencies have been fetched and Bazel has proceeded to analyze the dependency tree. The only thing it indicates is that the `@pip3//pyyaml` package was not properly fetched, but it does not provide any useful context.
+This error does not occur until _after_ external dependencies have been fetched
+and Bazel has proceeded to analyze the dependency tree. The only thing it
+indicates is that the `@pip3//pyyaml` package was not properly fetched, but it
+does not provide any useful context.
 
 Try the following steps in order to resolve the issue:
 
 #### Clean Bazel's external dependency cache
 
-Running this command before any build or test commands will remove all of the fetched external dependencies and force Bazel to start from scratch:
+Running this command before any build or test commands will remove all of the
+fetched external dependencies and force Bazel to start from scratch:
 
 ```sh
 bazel clean --expunge
@@ -129,51 +132,60 @@ bazel clean --expunge
 Bazel stores the fetched pip dependencies in the following directory:
 
 ```sh
-$(bazel info output_base)/external/pip<major>/
+$(bazel info output_base)/external/pip3/
 ```
 
 Where:
 
-`<major>` is the major Python version for which the problem is occurring (indicated by `@pip3` or `@pip3`)
+If the directory does not contain any wheel files, this can be an indication
+that the `create_pip_repository` tool never ran due to the Python interpreter
+not being available. See
+`Make sure the required Python interpreters are available` below.
 
-If the directory does not contain any wheel files, this can be an indication that the `create_pip_repository` tool never ran due to the Python interpreter not being available. See `Make sure the required Python interpreters are available` below.
+If the directory contains wheel files, there was most likely an error running
+the `create_pip_repository` tool. See
+`Try manually creating the pip repository to check for errors` below.
 
-If the directory contains wheel files, there was most likely an error running the `create_pip_repository` tool. See `Try manually creating the pip repository to check for errors` below.
-
-For more information about the output directories created by Bazel, see [the official documentation](https://docs.bazel.build/versions/master/output_directories.html).
+For more information about the output directories created by Bazel, see
+[the official documentation](https://docs.bazel.build/versions/master/output_directories.html).
 
 #### Make sure the required Python interpreters are available
 
-The correct Python interpreters for each major version must be available within the Bazel execution environment. To verify this, execute the following:
+The correct Python interpreters must be available within the Bazel execution
+environment. To verify this, execute the following:
 
 ```sh
 cd $(bazel info output_base)
-python2.<minor> --version
 python3.<minor> --version
 ```
 
 Where:
 
-`<minor>` is the minor Python version that the repo currently uses for the given major version (see `python/versions.bzl`)
+`<minor>` is the minor Python version that the repo currently uses for the
+given major version (see `python/versions.bzl`)
 
-If either of the version queries does not succeed, you must install that version of Python and ensure that the interpreter is available on the user's `PATH`.
+If either of the version queries does not succeed, you must install that version
+of Python and ensure that the interpreter is available on the user's `PATH`.
 
 #### Try manually creating the pip repository to check for errors
 
-Bazel unfortunately swallows output from the tools that it executes when fetching external dependencies and does not provide any verbosity control.
+Bazel unfortunately swallows output from the tools that it executes when
+fetching external dependencies and does not provide any verbosity control.
 
-In order to debug the tool that is used for fetching the pip dependencies, execute the following commands:
+In order to debug the tool that is used for fetching the pip dependencies,
+execute the following commands:
 
 ```sh
-python<major>.<minor> $(bazel info output_base)/external/com_128technology_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/<major>/requirements-<platform>.txt
+python3.<minor> $(bazel info output_base)/external/com_128technology_rules_pip/tools/create_pip_repository.par /tmp/bazel-pip-repo thirdparty/pip/3/requirements-<platform>.txt
 ```
 
 Where:
 
-`<major>` is the major Python version for which the problem is occurring (indicated by `@pip3` or `@pip3`)
+`<minor>` is the minor Python version that the repo currently uses for the given
+major version (see `python/versions.bzl`)
 
-`<minor>` is the minor Python version that the repo currently uses for the given major version (see `python/versions.bzl`)
+`<platform>` is the name of the platform on which you are executing the command
+(either `osx` or `linux`)
 
-`<platform>` is the name of the platform on which you are executing the command (either `osx` or `linux`)
-
-This will print any errors that are preventing Bazel from fetching the pip dependencies.
+This will print any errors that are preventing Bazel from fetching the pip
+dependencies.

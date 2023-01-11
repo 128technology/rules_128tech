@@ -11,7 +11,6 @@ package(default_visibility = ["//visibility:public"])
     for platform in PLATFORMS
 ]
 
-# Create a config setting for each 2-tuple of (python version, system platform).
 [
     selects.config_setting_group(
         name = "PY3_%s" % platform,
