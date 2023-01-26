@@ -11,15 +11,13 @@ package(default_visibility = ["//visibility:public"])
     for platform in PLATFORMS
 ]
 
-# Create a config setting for each 2-tuple of (python version, system platform).
 [
     selects.config_setting_group(
-        name = "%s_%s" % (py, platform),
+        name = "PY3_%s" % platform,
         match_all = [
-            "@rules_python//python:%s" % py,
+            "@rules_python//python:PY3",
             ":%s" % platform,
         ],
     )
-    for py in ("PY2", "PY3")
     for platform in PLATFORMS
 ]

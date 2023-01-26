@@ -3,12 +3,11 @@
 set -e
 
 if [ "$#" -lt 2 ]; then
-    echo "usage: setup_macos.sh <PY2_MINOR_VERSION> <PY3_MINOR_VERSION>"
+    echo "usage: setup_macos.sh <PY3_MINOR_VERSION>"
     exit 1
 fi
 
-PY2_MINOR_VERSION="$1"
-PY3_MINOR_VERSION="$2"
+PY3_MINOR_VERSION="$1"
 
 if [ ! -x "$(command -v pyenv)" ]; then
     echo "pyenv command not found"
@@ -83,5 +82,4 @@ function on_exit {
 }
 trap "on_exit" EXIT
 
-set_up_toolchain 2 $PY2_MINOR_VERSION
 set_up_toolchain 3 $PY3_MINOR_VERSION

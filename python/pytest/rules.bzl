@@ -41,54 +41,38 @@ def pytest_test(
         **kwargs: anything else to pass to the underlying py_test rule
     """
     args = list(args)
-
     args.extend(["$(location %s)" % src_ for src_ in srcs])
 
-    if python_version == "PY2AND3":
-        version_names = [
-            ("PY2", "py2_%s" % name),
-            ("PY3", "py3_%s" % name),
-        ]
-    else:
-        version_names = [(python_version, name)]
+    pytest_deps = [
+        "@pip3//pytest",
+        "@pip3//pytest_timeout",
+        "@pip3//pdbpp",
+        "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
+    ]
 
-    extra_deps = [depset(deps)]
+    if coverage:
+        args.extend(["--cov", "--no-cov-on-fail"])
+        pytest_deps.append("@pip3//pytest_cov")
 
-    for version, test_name in version_names:
-        version_args = args
-        pytest_deps = [
-            "@pip2and3//pytest",
-            "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
-        ]
+    if shuffle:
+        pytest_deps.append("@pip3//pytest_randomly")
 
-        if version == "PY3":
-            pytest_deps.extend([
-                "@pip3//pytest_timeout",
-                "@pip3//pdbpp",
-            ])
-
-            if coverage:
-                version_args.extend(["--cov", "--no-cov-on-fail"])
-                pytest_deps.append("@pip3//pytest_cov")
-
-            if shuffle:
-                pytest_deps.append("@pip3//pytest_randomly")
-
-        version_deps = depset(pytest_deps, transitive = extra_deps)
-
-        py_test(
-            name = test_name,
-            srcs = list(srcs) + [_MAIN],
-            main = _MAIN,
-            deps = version_deps,
-            data = data,
-            python_version = version,
-            args = _get_color_args() +
-                   version_args +
-                   ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
-            tags = ["pytest"] + tags,
-            **kwargs
-        )
+    py_test(
+        name = name,
+        srcs = list(srcs) + [_MAIN],
+        main = _MAIN,
+        deps = depset(
+            pytest_deps,
+            transitive = [depset(deps)],
+        ),
+        data = data,
+        python_version = python_version,
+        args = _get_color_args() +
+               args +
+               ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
+        tags = ["pytest"] + tags,
+        **kwargs
+    )
 
 def pytest_par(name, srcs, deps = [], args = [], **kwargs):
     """
