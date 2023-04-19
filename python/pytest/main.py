@@ -10,6 +10,8 @@ import pytest
 
 
 def main():
+    sys.path[:] = _remove_site_packages(sys.path)
+
     old = sys.argv
 
     sys.argv[:] = sys.argv[:1] + _junit_args(old) + _fail_fast_flag(old) + sys.argv[1:]
@@ -26,6 +28,9 @@ def main():
     if exit_code != 5:
         sys.exit(exit_code)
 
+
+def _remove_site_packages(sys_path):
+    return [path for path in sys_path if "site-packages" not in path]
 
 def _junit_args(argv):
     if _has_arg(argv, "--junit-xml"):

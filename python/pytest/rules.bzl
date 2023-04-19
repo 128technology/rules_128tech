@@ -44,6 +44,7 @@ def pytest_test(
     args.extend(["$(location %s)" % src_ for src_ in srcs])
 
     pytest_deps = [
+        "@pip3//lxml",
         "@pip3//pytest",
         "@pip3//pytest_timeout",
         "@pip3//pdbpp",
