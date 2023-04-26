@@ -2,7 +2,7 @@
 
 load("@rules_128tech//exec_wrapper:rules.bzl", "exec_wrapper")
 load("@rules_128tech//python:env.bzl", "get_python_env")
-load("@rules_128tech//python/par:rules.bzl", "par_binary")
+load("@subpar//:subpar.bzl", "par_binary")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 def pkg_python_app(
