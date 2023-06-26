@@ -26,10 +26,13 @@ def _safe_name(name):
     return name.lower().replace("-", "_")
 
 def _parse_requirements(file_contents):
-    return [
+    return _unique([
         line.split(" ")[0]
         for line in file_contents.splitlines()
-    ]
+    ])
+
+def _unique(items):
+    return list({item: True for item in items}.keys())
 
 def _generate_root_build_file(repository_ctx):
     config_setting = repository_ctx.attr.new_config_setting

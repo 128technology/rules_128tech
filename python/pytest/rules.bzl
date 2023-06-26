@@ -3,7 +3,7 @@ pytest https://docs.pytest.org/en/latest/
 """
 
 load("@rules_python//python:defs.bzl", "py_test")
-load("//python/par:rules.bzl", "par_binary")
+load("@subpar//:subpar.bzl", "par_binary")
 load("//private:cfg.bzl", "DISABLE_COLOR")
 
 _MAIN = Label("//python/pytest:main.py")
@@ -44,6 +44,7 @@ def pytest_test(
     args.extend(["$(location %s)" % src_ for src_ in srcs])
 
     pytest_deps = [
+        "@pip3//lxml",
         "@pip3//pytest",
         "@pip3//pytest_timeout",
         "@pip3//pdbpp",
