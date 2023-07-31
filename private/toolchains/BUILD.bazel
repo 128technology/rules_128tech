@@ -2,11 +2,19 @@ load("@bazel_tools//tools/python:toolchain.bzl", "py_runtime_pair")
 load("@rules_python//python:defs.bzl", "py_runtime")
 load(
     "//python:versions.bzl",
+    "PYTHON2",
+    "PYTHON2_MINOR",
     "PYTHON3",
     "PYTHON3_MINOR",
 )
 
 package(default_visibility = ["//:__subpackages__"])
+
+py_runtime(
+    name = "linux_x86_64_py2_runtime",
+    interpreter_path = "/usr/bin/%s" % PYTHON2,
+    python_version = "PY2",
+)
 
 py_runtime(
     name = "linux_x86_64_py3_runtime",
@@ -16,6 +24,7 @@ py_runtime(
 
 py_runtime_pair(
     name = "linux_x86_64_runtimes",
+    py2_runtime = ":linux_x86_64_py2_runtime",
     py3_runtime = ":linux_x86_64_py3_runtime",
 )
 
@@ -34,6 +43,12 @@ toolchain(
 )
 
 py_runtime(
+    name = "osx_x86_64_py2_runtime",
+    interpreter_path = "/opt/128technology/bazel/bin/%s" % PYTHON2,
+    python_version = "PY2",
+)
+
+py_runtime(
     name = "osx_x86_64_py3_runtime",
     interpreter_path = "/opt/128technology/bazel/bin/%s" % PYTHON3,
     python_version = "PY3",
@@ -41,6 +56,7 @@ py_runtime(
 
 py_runtime_pair(
     name = "osx_x86_64_runtimes",
+    py2_runtime = ":osx_x86_64_py2_runtime",
     py3_runtime = ":osx_x86_64_py3_runtime",
 )
 
@@ -61,5 +77,8 @@ toolchain(
 sh_binary(
     name = "setup_macos",
     srcs = ["setup_macos.sh"],
-    args = [PYTHON3_MINOR],
+    args = [
+        PYTHON2_MINOR,
+        PYTHON3_MINOR,
+    ],
 )

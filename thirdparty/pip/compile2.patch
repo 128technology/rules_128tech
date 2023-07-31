@@ -1,0 +1,27 @@
+diff --git a/src/BUILD b/src/BUILD
+index c258901..3928d8d 100644
+--- a/src/BUILD
++++ b/src/BUILD
+@@ -1,3 +1,5 @@
++load("@rules_python//python:defs.bzl", "py_binary", "py_library")
++
+ package(default_visibility = ["//visibility:public"])
+ 
+ py_library(
+@@ -35,6 +37,16 @@ py_binary(
+     ],
+ )
+ 
++py_binary(
++    name = "compile2",
++    srcs = ["compile.py"],
++    main = "compile.py",
++    python_version = "PY2",
++    deps = [
++        "//third_party/py:pypi_vendor",
++    ],
++)
++
+ py_library(
+     name = "pytest_helper",
+     srcs = ["pytest_helper.py"],
