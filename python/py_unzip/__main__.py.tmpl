@@ -1,0 +1,128 @@
+%shebang%
+
+# Copyright 2019 The Bazel Authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Main module for python applications generated using py_unzip.
+
+This is based on the bazel-generated __main__.py.
+https://bazel.googlesource.com/bazel/+/refs/heads/release-7.0.0-pre.20230128.3rc1/tools/python/python_bootstrap_template.txt
+"""
+
+import sys
+
+# The Python interpreter unconditionally prepends the directory containing this
+# script (following symlinks) to the import path. This is the cause of
+# bazelbuild/bazel/#9239, and is a special case of bazelbuild/bazel/#7091. We therefore
+# explicitly delete that entry. TODO(bazelbuild/bazel/#7091): Remove this hack when no
+# longer necessary.
+del sys.path[0]
+
+import os
+import pathlib
+import shutil
+
+
+def FindPythonBinary() -> str:
+    """Finds the real Python binary if it's not a normal absolute path."""
+    python_binary = "%python_binary%"
+    if os.path.isabs(python_binary):
+        return python_binary
+
+    prog = shutil.which(python_binary)
+    if prog is None:
+        raise AssertionError(f"Could not find python binary: {python_binary}")
+    return prog
+
+
+def CreatePythonPathEntries(
+    python_imports: str,
+    module_space: pathlib.Path,
+) -> "list[str]":
+    return [str(module_space)] + [
+        f"{module_space}/{path}" for path in python_imports.split(":")
+    ]
+
+
+def GetRepositoriesImports(module_space: pathlib.Path) -> "list[str]":
+    return [str(d) for d in sorted(module_space.iterdir()) if d.is_dir()]
+
+
+def Deduplicate(items):
+    """Efficiently filter out duplicates, keeping the first element only."""
+    seen = set()
+    for it in items:
+        if it not in seen:
+            seen.add(it)
+            yield it
+
+
+def Main():
+    args = sys.argv[1:]
+    module_space = FindModuleSpace()
+
+    python_imports = '%imports%'
+    python_path_entries = CreatePythonPathEntries(python_imports, module_space)
+    python_path_entries += GetRepositoriesImports(module_space)
+    # Remove duplicates to avoid overly long PYTHONPATH (bazelbuild/bazel#10977).
+    # Preserve order, keep first occurrence only.
+    python_path = ":".join([d.strip() for d in Deduplicate(python_path_entries)])
+
+    try:
+        old_python_path = os.environ["PYTHONPATH"]
+    except KeyError:
+        pass
+    else:
+        python_path = f"{python_path}:{old_python_path}"
+
+    os.environ["PYTHONPATH"] = python_path
+    # Now look for my main python source file.
+    # The magic string percent-main-percent is replaced with the filename of the
+    # main file of the Python binary in BazelPythonSemantics.java.
+    rel_path = "%main%".strip()
+
+    main_filename = module_space / rel_path
+    assert main_filename.exists(), f"Cannot exec() {main_filename!r}: file not found."
+    assert os.access(
+        main_filename, os.R_OK
+    ), f"Cannot exec() {main_filename!r}: file not readable."
+
+    python_program = FindPythonBinary()
+
+    args = [python_program, str(main_filename)] + args
+
+    try:
+        sys.stdout.flush()
+        os.execv(args[0], args)
+    except OSError as err:
+        # This exception occurs when os.execv() fails for some reason.
+        if not getattr(err, "filename", None):
+            err.filename = python_program  # Add info to error message
+        raise
+
+
+def FindModuleSpace() -> pathlib.Path:
+    stub_filename = pathlib.Path(sys.argv[0])
+    if not stub_filename.is_absolute():
+        stub_filename = os.getcwd() / stub_filename
+
+    # If a directory contains a __main__.py then 'python dir' is equivalent
+    # to 'python dir/__main__.py'.
+    dir_name = stub_filename if stub_filename.is_dir() else stub_filename.parent
+    return dir_name / "runfiles"
+
+
+if __name__ == "__main__":
+    Main()
