@@ -104,13 +104,23 @@ def _py_unzip_impl(ctx):
     )
 
     default_info = _py_binary_shim(ctx)
+    py_info = _py_info(ctx)
+    output_group_info = _output_group_info(ctx)
 
     return [
         default_info,
+        py_info,
+        output_group_info,
     ]
 
 def _py_runtime(ctx):
     return ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
+
+def _py_info(ctx):
+    return ctx.attr.src[PyInfo]
+
+def _output_group_info(ctx):
+    return ctx.attr.src[OutputGroupInfo]
 
 def _generate_main(ctx):
     py_runtime = _py_runtime(ctx)
@@ -120,7 +130,7 @@ def _generate_main(ctx):
         template = ctx.file._main_template,
         output = main_file,
         substitutions = {
-            "%imports%": ":".join(ctx.attr.src[PyInfo].imports.to_list()),
+            "%imports%": ":".join(_py_info(ctx).imports.to_list()),
             "%main%": ctx.workspace_name + "/" + ctx.file.main.path,
             "%python_binary%": py_runtime.interpreter_path,
             "%shebang%": py_runtime.stub_shebang,
@@ -138,7 +148,7 @@ def removesuffix(string, suffix):
     return string[:]
 
 def _get_zip_file(ctx):
-    zip_file = ctx.attr.src[OutputGroupInfo].python_zip_file
+    zip_file = _output_group_info(ctx).python_zip_file
     inputs = zip_file.to_list()
     if len(inputs) != 1:
         fail("expected only one .zip file", attr = inputs)
@@ -184,6 +194,10 @@ _py_unzip = rule(
     outputs = {
         "tar": "%{name}.tar",
     },
+    provides = [
+        PyInfo,  # re-export the PyInfo from the wrapped py_binary.
+        DefaultInfo,
+    ],
 )
 
 def _package_dir(libdir, app_name):
