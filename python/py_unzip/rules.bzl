@@ -29,10 +29,11 @@ def py_unzip(
         "%{name}.tar: A tarfile that can be extracted into a runnable python application.
 
     """
+    main = main if main else name + ".py"
+    py_name = "_" + name
+
     py_binary(
-        # TODO: add 'main = _determine_main(main, srcs)' otherwise the main argument is
-        # mandatory due to the underscore in the name.
-        name = "_" + name,
+        name = py_name,
         tags = tags,
         main = main,
         srcs = srcs,
@@ -41,17 +42,9 @@ def py_unzip(
         **kwargs
     )
 
-    native.alias(
-        name = name,
-        actual = "_" + name,
-        testonly = testonly,
-        tags = tags,
-        visibility = visibility,
-    )
-
     _py_unzip(
-        name = name + ".tar",
-        src = "_" + name,
+        name = name,
+        src = py_name,
         main = main,
         srcs = srcs,
         tags = tags + ["py_unzip"],
@@ -60,12 +53,37 @@ def py_unzip(
         package_dir = _package_dir(libdir, name),
     )
 
+def _py_binary_shim(ctx):
+    actual = ctx.files.src[1]
+    executable = ctx.actions.declare_file(ctx.attr.name + ".py_binary_shim.sh")
+
+    ctx.actions.expand_template(
+        template = ctx.file._py_binary_shim_template,
+        output = executable,
+        substitutions = {
+            "%workspace%": ctx.workspace_name,
+            "%executable%": actual.short_path,
+        },
+        is_executable = True,
+    )
+
+    return DefaultInfo(
+        executable = executable,
+        files = depset([actual]),
+        runfiles = ctx.runfiles(
+            files = [actual],
+        ).merge(
+            ctx.attr.src[DefaultInfo].default_runfiles,
+        ),
+    )
+
 def _py_unzip_impl(ctx):
     main_file = _generate_main(ctx)
     zip_file = _get_zip_file(ctx)
 
+    tar = ctx.outputs.tar
     ctx.actions.run(
-        outputs = [ctx.outputs.executable],
+        outputs = [tar],
         mnemonic = "ReZipper",
         inputs = [zip_file, main_file],
         executable = ctx.executable._rezipper,
@@ -73,24 +91,29 @@ def _py_unzip_impl(ctx):
             "--src",
             zip_file.path,
             "--dst",
-            ctx.outputs.executable.path,
+            tar.path,
             "--package-dir",
             _get_package_dir(ctx),
             "--main",
             main_file.path,
         ],
-        progress_message = "Repacking %s into %s" % (zip_file.short_path, ctx.outputs.executable.short_path),
+        progress_message = "Repacking %s into %s" % (
+            zip_file.short_path,
+            tar.short_path,
+        ),
     )
 
+    default_info = _py_binary_shim(ctx)
+
     return [
-        # TODO: This isn't actually execuable. This is needed so that the outputs can
-        # be '%{name}' and '%{name}.tar'.
-        DefaultInfo(executable = ctx.outputs.executable),
+        default_info,
     ]
 
-def _generate_main(ctx):
-    py_runtime = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
+def _py_runtime(ctx):
+    return ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
 
+def _generate_main(ctx):
+    py_runtime = _py_runtime(ctx)
     main_file = ctx.actions.declare_file(ctx.label.name + ".__main__.py")
 
     ctx.actions.expand_template(
@@ -98,11 +121,10 @@ def _generate_main(ctx):
         output = main_file,
         substitutions = {
             "%imports%": ":".join(ctx.attr.src[PyInfo].imports.to_list()),
-            "%main%": ctx.workspace_name + "/" + _determine_main(ctx).path,
+            "%main%": ctx.workspace_name + "/" + ctx.file.main.path,
             "%python_binary%": py_runtime.interpreter_path,
             "%shebang%": py_runtime.stub_shebang,
         },
-        is_executable = True,
     )
 
     return main_file
@@ -114,26 +136,6 @@ def removesuffix(string, suffix):
     if suffix and string.endswith(suffix):
         return string[:-len(suffix)]
     return string[:]
-
-def _determine_main(ctx):
-    """https://github.com/bazelbuild/bazel/blob/1eda22fa4d8488e434a7bbe1c548b5ca7fb7b6e5/src/main/starlark/builtins_bzl/common/python/py_executable.bzl#L608"""
-
-    # This doesn't need robust error-handling because the py_binary is instantiated
-    # first and will fail first.
-    if ctx.attr.main:
-        proposed_main = ctx.attr.main.label.name
-    else:
-        proposed_main = removesuffix(ctx.label.name, ".tar") + ".py"
-
-    main_files = [src for src in ctx.files.srcs if _path_endswith(src.short_path, proposed_main)]
-    if len(main_files) != 1:
-        fail("failed to determine main", attr = main_files)
-    return main_files[0]
-
-def _path_endswith(path, endswith):
-    # Use slash to anchor each path to prevent e.g.
-    # "ab/c.py".endswith("b/c.py") from incorrectly matching.
-    return ("/" + path).endswith("/" + endswith)
 
 def _get_zip_file(ctx):
     zip_file = ctx.attr.src[OutputGroupInfo].python_zip_file
@@ -151,12 +153,24 @@ def _get_package_dir(ctx):
 _py_unzip = rule(
     implementation = _py_unzip_impl,
     attrs = {
-        "main": attr.label(allow_files = True),
+        "main": attr.label(
+            allow_single_file = True,
+            mandatory = True,
+        ),
         "package_dir": attr.string(),
-        "src": attr.label(mandatory = True),
-        "srcs": attr.label_list(allow_files = True),
+        "src": attr.label(
+            mandatory = True,
+            providers = [PyInfo],
+        ),
+        "srcs": attr.label_list(
+            allow_files = True,
+        ),
         "_main_template": attr.label(
             default = "//python/py_unzip:__main__.py.tmpl",
+            allow_single_file = True,
+        ),
+        "_py_binary_shim_template": attr.label(
+            default = "//python/py_unzip:py_binary_shim.sh.tmpl",
             allow_single_file = True,
         ),
         "_rezipper": attr.label(
@@ -167,6 +181,9 @@ _py_unzip = rule(
     },
     toolchains = ["@bazel_tools//tools/python:toolchain_type"],
     executable = True,
+    outputs = {
+        "tar": "%{name}.tar",
+    },
 )
 
 def _package_dir(libdir, app_name):

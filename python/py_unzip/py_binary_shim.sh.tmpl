@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# This script acts as a proxy so that py_unzip targets can be `bazel run`.
+exec "$0.runfiles/%workspace%/%executable%" "$@"
