@@ -54,7 +54,11 @@ def run(src: str, dst: str, package_dir: pathlib.Path, main: pathlib.Path):
                 if info.filename == "__main__.py":
                     addfile(info.filename, main.read_bytes(), mode=0o755)
                 else:
-                    addfile(info.filename, z_in.read(info.filename), mode=0o644)
+                    addfile(
+                        info.filename,
+                        z_in.read(info.filename),
+                        mode=info.external_attr >> 16 or 0o644,
+                    )
 
 
 def _make_addfile(z_out: tarfile.TarFile, package_dir: pathlib.Path):
