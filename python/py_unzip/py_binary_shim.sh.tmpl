@@ -1,4 +1,10 @@
 #!/bin/bash
 
+if [ -n "$TEST_SRCDIR" ]; then
+    runfiles="$TEST_SRCDIR"
+else
+    runfiles="$0.runfiles"
+fi
+
 # This script acts as a proxy so that py_unzip targets can be `bazel run`.
-exec "$0.runfiles/%workspace%/%executable%" "$@"
+exec "$runfiles/%workspace%/%executable%" "$@"
