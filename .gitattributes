@@ -1,0 +1,2 @@
+*.sh.tmpl   linguist-language=shell
+*.py.tmpl   linguist-language=python
