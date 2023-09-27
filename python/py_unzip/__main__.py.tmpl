@@ -73,7 +73,7 @@ def Main():
     args = sys.argv[1:]
     module_space = FindModuleSpace()
 
-    python_imports = '%imports%'
+    python_imports = "%imports%"
     python_path_entries = CreatePythonPathEntries(python_imports, module_space)
     python_path_entries += GetRepositoriesImports(module_space)
     # Remove duplicates to avoid overly long PYTHONPATH (bazelbuild/bazel#10977).
@@ -101,7 +101,11 @@ def Main():
 
     python_program = FindPythonBinary()
 
-    args = [python_program, str(main_filename)] + args
+    args = [
+        python_program,
+        "-S",  # disallow site-packages.
+        str(main_filename),
+    ] + args
 
     try:
         sys.stdout.flush()
