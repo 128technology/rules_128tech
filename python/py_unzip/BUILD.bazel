@@ -1,0 +1,12 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+exports_files([
+    "__main__.py.tmpl",
+    "py_binary_shim.sh.tmpl",
+])
+
+py_binary(
+    name = "rezipper",
+    srcs = ["rezipper.py"],
+    visibility = ["//visibility:public"],
+)
