@@ -16,8 +16,7 @@ _boilerplate = b"""\
 # Boilerplate added by @rules_128tech//python/py_unzip:rezipper.py
 def _():
     import os
-    os.environ["ORIGINAL_PYTHONPATH"] = os.environ["PYTHONPATH"]
-    os.environ["PYTHONPATH"] = ""
+    os.environ["ORIGINAL_PYTHONPATH"] = os.environ.pop("PYTHONPATH")
 _()
 del _
 # End boilerplate
@@ -110,7 +109,7 @@ def run(
                     addfile(info.filename, main.read_bytes(), mode=0o755)
                     found_main = True
                 # Insert boilerplate into the user's __main__.py
-                elif info.filename.endswith(real_main):
+                elif info.filename == real_main:
                     addfile(
                         info.filename,
                         insert_boilerplate(z_in.read(info.filename)),

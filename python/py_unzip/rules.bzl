@@ -97,7 +97,7 @@ def _py_unzip_impl(ctx):
             "--main",
             main_file.path,
             "--real-main",
-            _real_main_path(ctx),
+            "runfiles/" + _real_main_path(ctx),
         ],
         progress_message = "Repacking %s into %s" % (
             zip_file.short_path,
