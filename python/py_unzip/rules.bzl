@@ -96,6 +96,8 @@ def _py_unzip_impl(ctx):
             _get_package_dir(ctx),
             "--main",
             main_file.path,
+            "--real-main",
+            "runfiles/" + _real_main_path(ctx),
         ],
         progress_message = "Repacking %s into %s" % (
             zip_file.short_path,
@@ -122,6 +124,9 @@ def _py_info(ctx):
 def _output_group_info(ctx):
     return ctx.attr.src[OutputGroupInfo]
 
+def _real_main_path(ctx):
+    return ctx.workspace_name + "/" + ctx.file.main.path
+
 def _generate_main(ctx):
     py_runtime = _py_runtime(ctx)
     main_file = ctx.actions.declare_file(ctx.label.name + ".__main__.py")
@@ -131,7 +136,7 @@ def _generate_main(ctx):
         output = main_file,
         substitutions = {
             "%imports%": ":".join(_py_info(ctx).imports.to_list()),
-            "%main%": ctx.workspace_name + "/" + ctx.file.main.path,
+            "%main%": _real_main_path(ctx),
             "%python_binary%": py_runtime.interpreter_path,
             "%shebang%": py_runtime.stub_shebang,
         },
