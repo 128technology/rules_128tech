@@ -4,7 +4,7 @@ pytest https://docs.pytest.org/en/latest/
 
 load("@rules_python//python:defs.bzl", "py_test")
 load("@subpar//:subpar.bzl", "par_binary")
-load("//private:cfg.bzl", "DISABLE_COLOR")
+load("//private:cfg.bzl", "DISABLE_COLOR", "DISABLE_SHUFFLE")
 
 _MAIN = Label("//python/pytest:main.py")
 
@@ -14,6 +14,22 @@ def _get_color_args():
         "//conditions:default": ["--color=yes"],
     })
 
+def _get_shuffle_args(shuffle):
+    if type(shuffle) == type(True):
+        return [] if shuffle else ["--randomly-dont-reorganize"]
+    if shuffle == None:
+        return select({
+            DISABLE_SHUFFLE: ["--randomly-dont-reorganize"],
+            "//conditions:default": [],
+        })
+
+    fail(
+        "shuffle argument must be True, False, or None. Got: {} (type {})".format(
+            shuffle,
+            type(shuffle),
+        ),
+    )
+
 def pytest_test(
         name,
         srcs = [],
@@ -22,7 +38,7 @@ def pytest_test(
         data = [],
         args = [],
         tags = [],
-        shuffle = True,
+        shuffle = None,
         coverage = True,
         **kwargs):
     """
@@ -66,14 +82,12 @@ def pytest_test(
                 "@pip3//lxml",
                 "@pip3//pytest_timeout",
                 "@pip3//pdbpp",
+                "@pip3//pytest_randomly",
             ])
 
             if coverage:
                 version_args.extend(["--cov", "--no-cov-on-fail"])
                 pytest_deps.append("@pip3//pytest_cov")
-
-            if shuffle:
-                pytest_deps.append("@pip3//pytest_randomly")
 
         version_deps = depset(pytest_deps, transitive = extra_deps)
 
@@ -85,6 +99,7 @@ def pytest_test(
             data = data,
             python_version = version,
             args = _get_color_args() +
+                   _get_shuffle_args(shuffle) +
                    version_args +
                    ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
             tags = ["pytest"] + tags,

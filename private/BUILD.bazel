@@ -1,5 +1,5 @@
-load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@io_bazel_skydoc//stardoc:stardoc.bzl", "stardoc")
 
 config_setting(
     name = "optimize",
@@ -11,6 +11,13 @@ config_setting(
     name = "disable_color",
     define_values = {
         "color": "no",
+    },
+)
+
+config_setting(
+    name = "disable_shuffle",
+    define_values = {
+        "shuffle": "off",
     },
 )
 
