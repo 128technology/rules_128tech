@@ -4,3 +4,6 @@ build:docs --build_tag_filters="docs"
 
 # don't build documentation by default
 build --build_tag_filters="-docs"
+
+# Disable shuffling the execution order of test cases within a single test.
+build:noshuffle --define shuffle=off
