@@ -14,9 +14,13 @@ def _get_color_args():
         "//conditions:default": ["--color=yes"],
     })
 
-def _get_shuffle_args(shuffle):
+def _get_shuffle_args(version, shuffle):
+    if version != "PY3":
+        return []
+
     if type(shuffle) == type(True):
         return [] if shuffle else ["--randomly-dont-reorganize"]
+
     if shuffle == None:
         return select({
             DISABLE_SHUFFLE: ["--randomly-dont-reorganize"],
@@ -99,7 +103,7 @@ def pytest_test(
             data = data,
             python_version = version,
             args = _get_color_args() +
-                   _get_shuffle_args(shuffle) +
+                   _get_shuffle_args(version, shuffle) +
                    version_args +
                    ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
             tags = ["pytest"] + tags,
