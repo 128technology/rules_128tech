@@ -60,9 +60,7 @@ def pytest_test(
         coverage(bool): if true, use pytest-cov to collect code coverage.
         **kwargs: anything else to pass to the underlying py_test rule
     """
-    args = list(args)
-
-    args.extend(["$(location %s)" % src_ for src_ in srcs])
+    base_args = ["$(location %s)" % src_ for src_ in srcs]
 
     if python_version == "PY2AND3":
         version_names = [
@@ -75,7 +73,7 @@ def pytest_test(
     extra_deps = [depset(deps)]
 
     for version, test_name in version_names:
-        version_args = args
+        version_args = []
         pytest_deps = [
             "@pip2and3//pytest",
             "@rules_128tech//rules_128tech/pytest_plugins:pytest_bazel_sharder",
@@ -104,6 +102,8 @@ def pytest_test(
             python_version = version,
             args = _get_color_args() +
                    _get_shuffle_args(version, shuffle) +
+                   base_args +
+                   args +
                    version_args +
                    ["-p", "rules_128tech.pytest_plugins.pytest_bazel_sharder"],
             tags = ["pytest"] + tags,
