@@ -39,7 +39,8 @@ def _compile_pip_requirements_impl(ctx):
         "@@REQUIREMENTS_TXT_PATH@@": requirements_txt_path,
         "@@PYTHON_INTERPRETER_PATH@@": python_interpreter,
         "@@PIP_COMPILE_BINARY@@": pip_compile.short_path,
-        "@@HEADER@@": ctx.attr.header,
+        "@@CUSTOM_COMPILE_COMMAND@@": ctx.attr.custom_compile_command or "bazel run %s" % ctx.label,
+        "@@QUIET_ARG@@": "--quiet" if not ctx.attr.verbose else "--verbose",
     }
 
     ctx.actions.expand_template(
@@ -72,17 +73,18 @@ compile_pip_requirements = rule(
         "data": attr.label_list(allow_files = True),
         "requirements_txt": attr.string(default = "requirements.txt"),
         "python_version": attr.string(default = "PY3", values = ("PY2", "PY3")),
-        "header": attr.string(default = "# This file is generated code. DO NOT EDIT."),
+        "custom_compile_command": attr.string(),
+        "verbose": attr.bool(default = False),
         "_pip2_compile": attr.label(
             default = Label("//python/compile:compile2.zip"),
             allow_single_file = True,
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_pip3_compile": attr.label(
             default = Label("//python/compile:compile.zip"),
             allow_single_file = True,
-            cfg = "host",
+            cfg = "exec",
             executable = True,
         ),
         "_template": attr.label(
