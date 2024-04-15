@@ -36,7 +36,7 @@ pip_install()
 
 register_toolchains(
     "//private/toolchains:linux_x86_64_python_toolchain",
-    "//private/toolchains:osx_x86_64_python_toolchain",
+    "//private/toolchains:osx_python_toolchain",
 )
 
 http_archive(
