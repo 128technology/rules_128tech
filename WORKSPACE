@@ -7,6 +7,10 @@ load("//:deps.bzl", "rules_128tech_deps")
 
 rules_128tech_deps()
 
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+
 load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
