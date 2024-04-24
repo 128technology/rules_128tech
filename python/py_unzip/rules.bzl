@@ -34,7 +34,7 @@ def py_unzip(
 
     py_binary(
         name = py_name,
-        tags = tags,
+        tags = list(tags),
         main = main,
         srcs = srcs,
         visibility = visibility,
@@ -50,7 +50,7 @@ def py_unzip(
         tags = tags + ["py_unzip"],
         visibility = visibility,
         testonly = testonly,
-        package_dir = _package_dir(libdir, name),
+        package_dir = _package_dir(libdir),
     )
 
 def _py_binary_shim(ctx):
@@ -88,6 +88,8 @@ def _py_unzip_impl(ctx):
         inputs = [zip_file, main_file],
         executable = ctx.executable._rezipper,
         arguments = [
+            "--name",
+            ctx.label.name,
             "--src",
             zip_file.path,
             "--dst",
@@ -97,7 +99,7 @@ def _py_unzip_impl(ctx):
             "--main",
             main_file.path,
             "--real-main",
-            "runfiles/" + _real_main_path(ctx),
+            _real_main_path(ctx, in_runfiles = True),
         ],
         progress_message = "Repacking %s into %s" % (
             zip_file.short_path,
@@ -116,7 +118,10 @@ def _py_unzip_impl(ctx):
     ]
 
 def _py_runtime(ctx):
-    return ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
+    py_runtime = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime
+    if py_runtime.interpreter_path == None:
+        fail("python toolchain missing interpreter_path")
+    return py_runtime
 
 def _py_info(ctx):
     return ctx.attr.src[PyInfo]
@@ -124,8 +129,9 @@ def _py_info(ctx):
 def _output_group_info(ctx):
     return ctx.attr.src[OutputGroupInfo]
 
-def _real_main_path(ctx):
-    return ctx.workspace_name + "/" + ctx.file.main.path
+def _real_main_path(ctx, *, in_runfiles):
+    path = ctx.workspace_name + "/" + ctx.file.main.path
+    return "runfiles/" + path if in_runfiles else path
 
 def _generate_main(ctx):
     py_runtime = _py_runtime(ctx)
@@ -136,7 +142,7 @@ def _generate_main(ctx):
         output = main_file,
         substitutions = {
             "%imports%": ":".join(_py_info(ctx).imports.to_list()),
-            "%main%": _real_main_path(ctx),
+            "%main%": _real_main_path(ctx, in_runfiles = False),
             "%python_binary%": py_runtime.interpreter_path,
             "%shebang%": py_runtime.stub_shebang,
         },
@@ -205,11 +211,11 @@ _py_unzip = rule(
     ],
 )
 
-def _package_dir(libdir, app_name):
-    return "%s/unzip/%s" % (libdir.rstrip("/"), app_name.strip("/"))
+def _package_dir(libdir):
+    return libdir.rstrip("/") + "/unzip"
 
 def _exec_path(libdir, app_name):
-    return "%s/__main__.py" % _package_dir(libdir, app_name)
+    return "%s/%s.py" % (_package_dir(libdir), app_name)
 
 unzip = struct(
     package_dir = _package_dir,

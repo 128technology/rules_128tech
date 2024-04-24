@@ -43,34 +43,32 @@ toolchain(
 )
 
 py_runtime(
-    name = "osx_x86_64_py2_runtime",
+    name = "osx_py2_runtime",
     interpreter_path = "/opt/128technology/bazel/bin/%s" % PYTHON2,
     python_version = "PY2",
 )
 
 py_runtime(
-    name = "osx_x86_64_py3_runtime",
+    name = "osx_py3_runtime",
     interpreter_path = "/opt/128technology/bazel/bin/%s" % PYTHON3,
     python_version = "PY3",
 )
 
 py_runtime_pair(
-    name = "osx_x86_64_runtimes",
-    py2_runtime = ":osx_x86_64_py2_runtime",
-    py3_runtime = ":osx_x86_64_py3_runtime",
+    name = "osx_runtimes",
+    py2_runtime = ":osx_py2_runtime",
+    py3_runtime = ":osx_py3_runtime",
 )
 
 toolchain(
-    name = "osx_x86_64_python_toolchain",
+    name = "osx_python_toolchain",
     exec_compatible_with = [
         "@bazel_tools//platforms:osx",
-        "@bazel_tools//platforms:x86_64",
     ],
     target_compatible_with = [
         "@bazel_tools//platforms:osx",
-        "@bazel_tools//platforms:x86_64",
     ],
-    toolchain = ":osx_x86_64_runtimes",
+    toolchain = ":osx_runtimes",
     toolchain_type = "@bazel_tools//tools/python:toolchain_type",
 )
 

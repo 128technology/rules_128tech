@@ -2,9 +2,9 @@
 
 load("@rules_128tech//exec_wrapper:rules.bzl", "exec_wrapper")
 load("@rules_128tech//python:env.bzl", "get_python_env")
-load("@subpar//:subpar.bzl", "par_binary")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@rules_128tech//python/py_unzip:rules.bzl", "unzip")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@subpar//:subpar.bzl", "par_binary")
 
 def pkg_python_app(name, tar, bindir, libdir, use_py_unzip = False, **kwargs):
     """
@@ -93,6 +93,7 @@ def _pkg_par_binary_app(
         strip_prefix = ".",
         remap_paths = remap_paths,
         visibility = tar_visibility,
+        allow_duplicates_with_different_content = False,
     )
 
 def _pkg_py_unzip_app(
@@ -122,7 +123,7 @@ def _pkg_py_unzip_app(
     unzip.py_unzip(
         name = name,
         libdir = libdir,
-        visibility = visibility,
+        visibility = ["//visibility:public"],
         **kwargs
     )
 
@@ -134,4 +135,5 @@ def _pkg_py_unzip_app(
         strip_prefix = ".",
         remap_paths = {"/%s_exec_wrapper" % name: "%s/%s" % (bindir, entrypoint or name)},
         visibility = visibility,
+        allow_duplicates_with_different_content = False,
     )

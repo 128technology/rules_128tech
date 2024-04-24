@@ -35,8 +35,8 @@ def rules_128tech_deps():
     maybe(
         http_archive,
         name = "rules_pkg",
-        sha256 = "752146e2813f4c135ec9f71b592bf98f96f026049e6d65248534dbeccb2448e1",
-        urls = ["https://github.com/bazelbuild/rules_pkg/releases/download/0.1.0/rules_pkg-0.1.0.tar.gz"],
+        sha256 = "d250924a2ecc5176808fc4c25d5cf5e9e79e6346d79d5ab1c493e289e722d1d0",
+        urls = ["https://github.com/bazelbuild/rules_pkg/releases/download/0.10.1/rules_pkg-0.10.1.tar.gz"],
     )
 
     # These are transitive dependencies of rules_pkg that we shouldn't need to declare

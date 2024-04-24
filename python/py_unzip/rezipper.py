@@ -49,6 +49,7 @@ _boilerplate_insertion_regex = re.compile(
 def main():
     args = _parse_args()
     run(
+        name=args.name,
         src=args.src,
         dst=args.dst,
         package_dir=args.package_dir,
@@ -59,6 +60,12 @@ def main():
 
 def _parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument(
+        "--name",
+        help="Name of the application.",
+        required=True,
+    )
 
     parser.add_argument(
         "--src",
@@ -91,6 +98,7 @@ def _parse_args():
 
 
 def run(
+    name: str,
     src: str,
     dst: str,
     package_dir: pathlib.Path,
@@ -106,7 +114,7 @@ def run(
             for info in z_in.infolist():
                 # Override the __main__.py from the python_zip_file.
                 if info.filename == "__main__.py":
-                    addfile(info.filename, main.read_bytes(), mode=0o755)
+                    addfile(f"{name}.py", main.read_bytes(), mode=0o755)
                     found_main = True
                 # Insert boilerplate into the user's __main__.py
                 elif info.filename == real_main:
