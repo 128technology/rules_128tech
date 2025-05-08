@@ -83,7 +83,6 @@ def pytest_test(
             pytest_deps.extend([
                 "@pip3//lxml",
                 "@pip3//pytest_timeout",
-                "@pip3//pdbpp",
                 "@pip3//pytest_randomly",
             ])
 

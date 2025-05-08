@@ -1,7 +1,6 @@
 astroid
 click
 coverage
-pdbpp
 pylint
 pytest
 pytest-cov
